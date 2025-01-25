@@ -5,7 +5,7 @@ resources:
       name: ${var.workflow_name}
 
       trigger:
-        pause_status: UNPAUSED
+        pause_status: ${var.workflow_trigger_pause_status}
         file_arrival:
           url: /Volumes/${var.catalog_use}/${var.schema_use}/landing/
           min_time_between_triggers_seconds: 300

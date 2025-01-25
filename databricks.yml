@@ -33,6 +33,8 @@ targets:
       catalog_use: redox
       schema_use: hls_webinar_fy25q4
       workflow_name: hls_webinar_fy25q4_etl_pipeline
+      workflow_trigger_pause_status: UNPAUSED
+      run_as_user: matthew.giglia@databricks.com
 
   prod:
     mode: production
@@ -56,6 +58,9 @@ variables:
   workflow_name:
     default: fhir_etl_pipeline 
     description: The name of the FHIR ETL pipeline that will stream ingest FHIR JSON bundles from the landing volume and into bronze and then parse into a first level silver.  
+  workflow_trigger_pause_status:
+    default: PAUSED
+    description: Status of the workflow's file based trigger.  Switch to UNPAUSED for higher level environments.  
   run_as_user: 
     default: matthew.giglia@databricks.com
     description: The user name, service principal or managed identity that the workflow should execute as.  Note that the development target will always run as the developer deploying to that target.   
