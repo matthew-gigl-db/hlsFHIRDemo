@@ -35,6 +35,7 @@ targets:
       workflow_name: hls_webinar_fy25q4_etl_pipeline
       workflow_trigger_pause_status: UNPAUSED
       run_as_user: matthew.giglia@databricks.com
+      sql_warehouse_id: 148ccb90800933a1
 
   prod:
     mode: production
@@ -63,4 +64,7 @@ variables:
     description: Status of the workflow's file based trigger.  Switch to UNPAUSED for higher level environments.  
   run_as_user: 
     default: matthew.giglia@databricks.com
-    description: The user name, service principal or managed identity that the workflow should execute as.  Note that the development target will always run as the developer deploying to that target.   
+    description: The user name, service principal or managed identity that the workflow should execute as.  Note that the development target will always run as the developer deploying to that target. 
+  sql_warehouse_id:
+    default: 148ccb90800933a1
+    description: The unique Databricks Serverless SQL Warehouse ID for SQL scoped notebooks to execute against.  Note that this is specific per workspace/host.    
