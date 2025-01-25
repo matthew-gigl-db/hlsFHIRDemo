@@ -23,12 +23,12 @@ targets:
     workspace:
       host: https://adb-984752964297111.11.azuredatabricks.net/
       # We explicitly specify /Workspace/Users/matthew.giglia@databricks.com to make sure we only have a single copy.
-      root_path: /Workspace/Users/matthew.giglia@databricks.com/.bundle/${bundle.name}/${bundle.target}
+      root_path: /Workspace/Users/${var.run_as_user}/.bundle/${bundle.name}/${bundle.target}
     permissions:
-      - user_name: matthew.giglia@databricks.com
+      - user_name: ${var.run_as_user}
         level: CAN_MANAGE
     run_as:
-      user_name: matthew.giglia@databricks.com
+      user_name: ${var.run_as_user}
     variables:
       catalog_use: redox
       schema_use: hls_webinar_fy25q4
@@ -39,12 +39,12 @@ targets:
     workspace:
       host: https://e2-demo-field-eng.cloud.databricks.com
       # We explicitly specify /Workspace/Users/matthew.giglia@databricks.com to make sure we only have a single copy.
-      root_path: /Workspace/Users/matthew.giglia@databricks.com/.bundle/${bundle.name}/${bundle.target}
+      root_path: /Workspace/Users/${var.run_as_user}/.bundle/${bundle.name}/${bundle.target}
     permissions:
-      - user_name: matthew.giglia@databricks.com
+      - user_name: ${var.run_as_user}
         level: CAN_MANAGE
     run_as:
-      user_name: matthew.giglia@databricks.com
+      user_name: ${var.run_as_user}
 
 variables:
   catalog_use:
@@ -55,4 +55,7 @@ variables:
     description: The schema that will be created and used as part of the FHIR Workshop, or other demonstration code.  This schema will contain tables, volumes, SQL UDFs, and machine learning models. 
   workflow_name:
     default: fhir_etl_pipeline 
-    description: The name of the FHIR ETL pipeline that will stream ingest FHIR JSON bundles from the landing volume and into bronze and then parse into a first level silver.   
+    description: The name of the FHIR ETL pipeline that will stream ingest FHIR JSON bundles from the landing volume and into bronze and then parse into a first level silver.  
+  run_as_user: 
+    default: matthew.giglia@databricks.com
+    description: The user name, service principal or managed identity that the workflow should execute as.  Note that the development target will always run as the developer deploying to that target.   

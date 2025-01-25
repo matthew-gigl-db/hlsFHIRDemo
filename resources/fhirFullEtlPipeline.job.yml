@@ -1,0 +1,31 @@
+# The main job for hlsFHIRDemo.
+resources:
+  jobs:
+    fhirFullEtlPipeline_job:
+      name: ${var.workflow_name}
+
+      trigger:
+        pause_status: UNPAUSED
+        file_arrival:
+          url: /Volumes/${var.catalog_use}/${var.schema_use}/landing/
+          min_time_between_triggers_seconds: 300
+          wait_after_last_change_seconds: 0
+
+      email_notifications:
+        on_failure:
+          - matthew.giglia@databricks.com
+
+      tasks:
+        - task_key: notebook_task
+          job_cluster_key: job_cluster
+          notebook_task:
+            notebook_path: ../src/notebook.ipynb
+        
+      job_clusters:
+        - job_cluster_key: job_cluster
+          new_cluster:
+            spark_version: 15.4.x-scala2.12
+            node_type_id: i3.xlarge
+            autoscale:
+                min_workers: 1
+                max_workers: 4
