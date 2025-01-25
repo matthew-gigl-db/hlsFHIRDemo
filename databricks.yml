@@ -18,6 +18,22 @@ targets:
     workspace:
       host: https://e2-demo-field-eng.cloud.databricks.com
 
+  hls_webinar_fy25q4:
+    mode: production
+    workspace:
+      host: https://adb-984752964297111.11.azuredatabricks.net/
+      # We explicitly specify /Workspace/Users/matthew.giglia@databricks.com to make sure we only have a single copy.
+      root_path: /Workspace/Users/matthew.giglia@databricks.com/.bundle/${bundle.name}/${bundle.target}
+    permissions:
+      - user_name: matthew.giglia@databricks.com
+        level: CAN_MANAGE
+    run_as:
+      user_name: matthew.giglia@databricks.com
+    variables:
+      catalog_use: redox
+      schema_use: hls_webinar_fy25q4
+      workflow_name: hls_webinar_fy25q4_etl_pipeline
+
   prod:
     mode: production
     workspace:
@@ -29,3 +45,14 @@ targets:
         level: CAN_MANAGE
     run_as:
       user_name: matthew.giglia@databricks.com
+
+variables:
+  catalog_use:
+    default: fhir_workshop
+    description: The Unity Catalog catalog that the schemas will be created in.  
+  schema_use: 
+    default: matthew_giglia
+    description: The schema that will be created and used as part of the FHIR Workshop, or other demonstration code.  This schema will contain tables, volumes, SQL UDFs, and machine learning models. 
+  workflow_name:
+    default: fhir_etl_pipeline 
+    description: The name of the FHIR ETL pipeline that will stream ingest FHIR JSON bundles from the landing volume and into bronze and then parse into a first level silver.   
