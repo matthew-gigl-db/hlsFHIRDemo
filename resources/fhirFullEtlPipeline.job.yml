@@ -9,7 +9,7 @@ resources:
         file_arrival:
           url: /Volumes/${var.catalog_use}/${var.schema_use}/landing/
           min_time_between_triggers_seconds: 300
-          wait_after_last_change_seconds: 5
+          wait_after_last_change_seconds: 0
 
       email_notifications:
         on_failure:
