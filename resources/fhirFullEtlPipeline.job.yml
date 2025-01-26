@@ -8,7 +8,7 @@ resources:
         pause_status: ${var.workflow_trigger_pause_status}
         file_arrival:
           url: /Volumes/${var.catalog_use}/${var.schema_use}/landing/
-          min_time_between_triggers_seconds: 300
+          min_time_between_triggers_seconds: 600
           wait_after_last_change_seconds: 0
 
       email_notifications:
