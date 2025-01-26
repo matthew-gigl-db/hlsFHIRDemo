@@ -76,6 +76,7 @@ resources:
                 base_parameters:
                   resource_type: "{{input}}"
                 source: WORKSPACE
+                warehouse_id: ${var.sql_warehouse_id}
 
       
       max_concurrent_runs: 5
