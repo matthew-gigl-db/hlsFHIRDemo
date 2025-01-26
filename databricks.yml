@@ -36,7 +36,6 @@ targets:
       workflow_trigger_pause_status: UNPAUSED
       run_as_user: matthew.giglia@databricks.com
       sql_warehouse_id: 148ccb90800933a1
-      dev_tag: 
 
   prod:
     mode: production
