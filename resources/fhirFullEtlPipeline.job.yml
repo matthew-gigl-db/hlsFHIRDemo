@@ -26,6 +26,9 @@ resources:
       queue:
         enabled: true
       
+      tags:
+        dev: ${var.dev_tag}
+      
       parameters:
         - name: bundle.workspace.file_path
           default: ${workspace.file_path}
