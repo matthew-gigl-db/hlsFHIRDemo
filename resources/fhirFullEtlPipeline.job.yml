@@ -26,7 +26,7 @@ resources:
             - task_key: full_refresh
               outcome: "true"
           notebook_task:
-            notebook_path: ../src/fhir-etl-pipeline/00 - Drop Streaming Tables
+            notebook_path: ../src/fhir-etl-pipeline/00 - Drop Streaming Tables.ipynb
             source: WORKSPACE
             warehouse_id: ${var.sql_warehouse_id}
         - task_key: streaming_bronze
