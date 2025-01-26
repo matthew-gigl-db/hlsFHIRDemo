@@ -56,13 +56,28 @@ resources:
             source: WORKSPACE
             warehouse_id: ${var.sql_warehouse_id}
           description: SQL Scoped notebook used for exploding the FHIR bundles entry resources and recording their schemas.
-        - task_key: task_values
+        - task_key: identify_available_resources
           depends_on: 
             - task_key: resources
           notebook_task:
             notebook_path: ../src/fhir-etl-pipeline/04 - Set Resource Type Task Values.ipynb
             source: WORKSPACE
           description: Determines the FHIR entry resource types that have entered the system and sets a dynmaic task value for the forEach task that creates a silver table for each resource.
+        - task_key: silver_variant
+          depends_on:
+            - task_key: identify_available_resources
+          for_each_task:
+            inputs: "{{tasks.identify_available_resources.values.resource_types}}"
+            concurrency: 27
+            task:
+              task_key: silver_variant_iteration
+              notebook_task:
+                notebook_path: ../src/fhir-etl-pipeline/05
+                  - Silver Variant
+                base_parameters:
+                  resource_type: "{{input}}"
+                source: WORKSPACE
+
       
       max_concurrent_runs: 5
       queue:
