@@ -72,8 +72,7 @@ resources:
             task:
               task_key: silver_variant_iteration
               notebook_task:
-                notebook_path: ../src/fhir-etl-pipeline/05
-                  - Silver Variant
+                notebook_path: ../src/fhir-etl-pipeline/05 - Silver Variant.ipynb
                 base_parameters:
                   resource_type: "{{input}}"
                 source: WORKSPACE
