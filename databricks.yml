@@ -72,7 +72,7 @@ variables:
     default: matthew_giglia
     description: Automatica development tag for development targets.  
   full_refresh:
-    default: true
+    default: false
     description: Boolean (evaluated as string when inputted as a parameter in a dbutils text widget) to perform a full refresh on all streaming tables.  
 
 
