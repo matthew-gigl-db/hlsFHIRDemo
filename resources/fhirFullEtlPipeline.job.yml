@@ -13,7 +13,7 @@ resources:
 
       email_notifications:
         on_failure:
-          - matthew.giglia@databricks.com
+          - ${var.run_as_user}
 
       tasks:
         - task_key: full_refresh_streaming_bronze
