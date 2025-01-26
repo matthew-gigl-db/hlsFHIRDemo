@@ -18,14 +18,56 @@ targets:
     workspace:
       host: https://e2-demo-field-eng.cloud.databricks.com
 
+  hls_webinar_fy25q4:
+    mode: production
+    workspace:
+      host: https://adb-984752964297111.11.azuredatabricks.net/
+      # We explicitly specify /Workspace/Users/matthew.giglia@databricks.com to make sure we only have a single copy.
+      root_path: /Workspace/Users/${var.run_as_user}/.bundle/${bundle.name}/${bundle.target}
+    permissions:
+      - user_name: ${var.run_as_user}
+        level: CAN_MANAGE
+    run_as:
+      user_name: ${var.run_as_user}
+    variables:
+      catalog_use: redox
+      schema_use: hls_webinar_fy25q4
+      workflow_name: hls_webinar_fy25q4_etl_pipeline
+      workflow_trigger_pause_status: UNPAUSED
+      run_as_user: matthew.giglia@databricks.com
+      sql_warehouse_id: 148ccb90800933a1
+
   prod:
     mode: production
     workspace:
       host: https://e2-demo-field-eng.cloud.databricks.com
       # We explicitly specify /Workspace/Users/matthew.giglia@databricks.com to make sure we only have a single copy.
-      root_path: /Workspace/Users/matthew.giglia@databricks.com/.bundle/${bundle.name}/${bundle.target}
+      root_path: /Workspace/Users/${var.run_as_user}/.bundle/${bundle.name}/${bundle.target}
     permissions:
-      - user_name: matthew.giglia@databricks.com
+      - user_name: ${var.run_as_user}
         level: CAN_MANAGE
     run_as:
-      user_name: matthew.giglia@databricks.com
+      user_name: ${var.run_as_user}
+
+variables:
+  catalog_use:
+    default: fhir_workshop
+    description: The Unity Catalog catalog that the schemas will be created in.  
+  schema_use: 
+    default: matthew_giglia
+    description: The schema that will be created and used as part of the FHIR Workshop, or other demonstration code.  This schema will contain tables, volumes, SQL UDFs, and machine learning models. 
+  workflow_name:
+    default: fhir_etl_pipeline 
+    description: The name of the FHIR ETL pipeline that will stream ingest FHIR JSON bundles from the landing volume and into bronze and then parse into a first level silver.  
+  workflow_trigger_pause_status:
+    default: PAUSED
+    description: Status of the workflow's file based trigger.  Switch to UNPAUSED for higher level environments.  
+  run_as_user: 
+    default: matthew.giglia@databricks.com
+    description: The user name, service principal or managed identity that the workflow should execute as.  Note that the development target will always run as the developer deploying to that target. 
+  sql_warehouse_id:
+    default: 148ccb90800933a1
+    description: The unique Databricks Serverless SQL Warehouse ID for SQL scoped notebooks to execute against.  Note that this is specific per workspace/host.   
+  dev_tag: 
+    default: matthew_giglia
+    description: Automatica development tag for development targets.  

@@ -1,0 +1,39 @@
+# The main job for hlsFHIRDemo.
+resources:
+  jobs:
+    fhirFullEtlPipeline_job:
+      name: ${var.workflow_name}
+
+      trigger:
+        pause_status: ${var.workflow_trigger_pause_status}
+        file_arrival:
+          url: /Volumes/${var.catalog_use}/${var.schema_use}/landing/
+          min_time_between_triggers_seconds: 300
+          wait_after_last_change_seconds: 0
+
+      email_notifications:
+        on_failure:
+          - ${var.run_as_user}
+
+      tasks:
+        - task_key: full_refresh_streaming_bronze
+          notebook_task:
+            notebook_path: ../src/fhir-etl-pipeline/00 - Full Refresh Streaming Bronze.ipynb
+            source: WORKSPACE
+            warehouse_id: ${var.sql_warehouse_id}
+          description: SQL Scoped notebook used for performing full refreshes of streaming bronze ingestion of FHIR resources.  
+      
+      queue:
+        enabled: true
+      
+      tags:
+        dev: ${var.dev_tag}
+      
+      parameters:
+        - name: bundle.workspace.file_path
+          default: ${workspace.file_path}
+        - name: catalog_use 
+          default: ${var.catalog_use}
+        - name: schema_use
+          default: ${var.schema_use}
+        
