@@ -22,6 +22,13 @@ resources:
             source: WORKSPACE
             warehouse_id: ${var.sql_warehouse_id}
           description: SQL Scoped notebook used for performing full refreshes of streaming bronze ingestion of FHIR resources.  
+        - task_key: full_refresh_meta
+          depends_on: full_refresh_streaming_bronze
+          notebook_task:
+            notebook_path: ../src/fhir-etl-pipeline/01 - Full Refresh Meta.ipynb
+            source: WORKSPACE
+            warehouse_id: ${var.sql_warehouse_id}
+          description: SQL Scoped notebook used for parsing the Bundle's file metadata, ingestion time, and Meta object data.
       
       max_concurrent_runs: 5
       queue:
