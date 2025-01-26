@@ -28,7 +28,7 @@ resources:
       
       parameters:
         - name: bundle.workspace.file_path
-          default: ${workpace.file_path}
+          default: ${workspace.file_path}
         - name: catalog_use 
           default: ${var.catalog_use}
         - name: schema_use
