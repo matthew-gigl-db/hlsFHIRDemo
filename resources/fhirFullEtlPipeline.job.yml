@@ -16,35 +16,40 @@ resources:
           - ${var.run_as_user}
 
       tasks:
-        - task_key: full_refresh_streaming_bronze
+        - task_key: full_refresh
+          condition_task:
+            op: EQUAL_TO
+            left: "{{job.parameters.full_refresh}}"
+            right: "true"
+        - task_key: streaming_bronze
           notebook_task:
-            notebook_path: ../src/fhir-etl-pipeline/00 - Full Refresh Streaming Bronze.ipynb
+            notebook_path: ../src/fhir-etl-pipeline/01 - Streaming Bronze.ipynb
             source: WORKSPACE
             warehouse_id: ${var.sql_warehouse_id}
-          description: SQL Scoped notebook used for performing full refreshes of streaming bronze ingestion of FHIR resources. Full Refresh. 
-        - task_key: full_refresh_meta
+          description: SQL Scoped notebook used for creating or refreshing streaming bronze ingestion of FHIR resources. 
+        - task_key: meta
           depends_on: 
-            - task_key: full_refresh_streaming_bronze
+            - task_key: streaming_bronze
           notebook_task:
-            notebook_path: ../src/fhir-etl-pipeline/01 - Full Refresh Meta.ipynb
+            notebook_path: ../src/fhir-etl-pipeline/02 - Meta.ipynb
             source: WORKSPACE
             warehouse_id: ${var.sql_warehouse_id}
-          description: SQL Scoped notebook used for parsing the Bundle's file metadata, ingestion time, and Meta object data. Full Refresh.
-        - task_key: full_refresh_resources
+          description: SQL Scoped notebook used for parsing the Bundle's file metadata, ingestion time, and Meta object data.
+        - task_key: resources
           depends_on: 
-            - task_key: full_refresh_streaming_bronze
+            - task_key: streaming_bronze
           notebook_task:
-            notebook_path: ../src/fhir-etl-pipeline/02 - Full Refresh Resources.ipynb
+            notebook_path: ../src/fhir-etl-pipeline/03 - Resources.ipynb
             source: WORKSPACE
             warehouse_id: ${var.sql_warehouse_id}
-          description: SQL Scoped notebook used for exploding the FHIR bundles entry resources and recording their schemas. Full Refresh. 
-        - task_key: full_refresh_task_values
+          description: SQL Scoped notebook used for exploding the FHIR bundles entry resources and recording their schemas.
+        - task_key: task_values
           depends_on: 
-            - task_key: full_refresh_resources
+            - task_key: resources
           notebook_task:
-            notebook_path: ../src/fhir-etl-pipeline/03 - Set Resource Type Task Values.ipynb
+            notebook_path: ../src/fhir-etl-pipeline/04 - Set Resource Type Task Values.ipynb
             source: WORKSPACE
-          description: Determines the FHIR entry resource types that have entered the system and sets a dynmaic task value for the forEach task. Full Refresh. 
+          description: Determines the FHIR entry resource types that have entered the system and sets a dynmaic task value for the forEach task that creates a silver table for each resource.
       
       max_concurrent_runs: 5
       queue:
