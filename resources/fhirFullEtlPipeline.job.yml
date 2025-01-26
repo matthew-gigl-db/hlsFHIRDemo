@@ -68,7 +68,7 @@ resources:
             - task_key: identify_available_resources
           for_each_task:
             inputs: "{{tasks.identify_available_resources.values.resource_types}}"
-            concurrency: 40
+            concurrency: 42
             task:
               task_key: silver_variant_iteration
               notebook_task:
