@@ -19,9 +19,14 @@ resources:
         - task_key: full_refresh_streaming_bronze
           notebook_task:
             notebook_path: ../src/fhir-etl-pipeline/00 - Full Refresh Streaming Bronze.ipynb
-          warehouse_id: ${var.sql_warehouse_id}
+            source: WORKSPACE
+            warehouse_id: ${var.sql_warehouse_id}
           description: SQL Scoped notebook used for performing full refreshes of streaming bronze ingestion of FHIR resources.  
       
       queue:
         enabled: true
+      
+      parameters:
+        catalog_use: ${var.catalog_use}
+        schema_use: ${var.schema_use}
         
