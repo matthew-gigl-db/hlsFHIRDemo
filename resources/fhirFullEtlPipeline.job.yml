@@ -38,6 +38,13 @@ resources:
             source: WORKSPACE
             warehouse_id: ${var.sql_warehouse_id}
           description: SQL Scoped notebook used for exploding the FHIR bundles entry resources and recording their schemas. Full Refresh. 
+        - task_key: full_refresh_task_values
+          depends_on: 
+            - task_key: full_refresh_resources
+          notebook_task:
+            notebook_path: ../src/fhir-etl-pipeline/03 - Set Resource Type Task Values.ipynb
+            source: WORKSPACE
+          description: Determines the FHIR entry resource types that have entered the system and sets a dynmaic task value for the forEach task. Full Refresh. 
       
       max_concurrent_runs: 5
       queue:
