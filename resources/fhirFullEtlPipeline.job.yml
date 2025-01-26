@@ -30,6 +30,11 @@ resources:
             source: WORKSPACE
             warehouse_id: ${var.sql_warehouse_id}
         - task_key: streaming_bronze
+          depends_on:
+            - task_key: full_refresh
+              outcome: "false"
+            - task_key: drop_streaming_tables
+          run_if: AT_LEAST_ONE_SUCCESS
           notebook_task:
             notebook_path: ../src/fhir-etl-pipeline/01 - Streaming Bronze.ipynb
             source: WORKSPACE
