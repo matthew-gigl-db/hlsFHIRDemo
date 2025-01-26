@@ -31,8 +31,6 @@ resources:
           default: ${workpace.file_path}
         - name: catalog_use 
           default: ${var.catalog_use}
-          description: The Unity Catalog catalog that the schemas will be created in. 
         - name: schema_use
           default: ${var.schema_use}
-          description: The schema that will be created and used as part of the FHIR Workshop, or other demonstration code.  This schema will contain tables, volumes, SQL UDFs, and machine learning models. 
         
