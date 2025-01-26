@@ -21,6 +21,14 @@ resources:
             op: EQUAL_TO
             left: "{{job.parameters.full_refresh}}"
             right: "true"
+        - task_key: drop_streaming_tables
+          depends_on:
+            - task_key: full_refresh
+              outcome: "true"
+          notebook_task:
+            notebook_path: ../src/fhir-etl-pipeline/00 - Drop Streaming Tables
+            source: WORKSPACE
+            warehouse_id: ${var.sql_warehouse_id}
         - task_key: streaming_bronze
           notebook_task:
             notebook_path: ../src/fhir-etl-pipeline/01 - Streaming Bronze.ipynb
@@ -65,4 +73,6 @@ resources:
           default: ${var.catalog_use}
         - name: schema_use
           default: ${var.schema_use}
+        - name: full_refresh
+          default: ${var.full_refresh}
         
