@@ -23,6 +23,7 @@ resources:
             warehouse_id: ${var.sql_warehouse_id}
           description: SQL Scoped notebook used for performing full refreshes of streaming bronze ingestion of FHIR resources.  
       
+      max_concurrent_runs: 5
       queue:
         enabled: true
       
