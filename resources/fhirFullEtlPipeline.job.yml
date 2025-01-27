@@ -8,7 +8,7 @@ resources:
         pause_status: ${var.workflow_trigger_pause_status}
         file_arrival:
           url: /Volumes/${var.catalog_use}/${var.schema_use}/landing/
-          min_time_between_triggers_seconds: 300
+          min_time_between_triggers_seconds: 600
           wait_after_last_change_seconds: 0
 
       email_notifications:
@@ -16,13 +16,70 @@ resources:
           - ${var.run_as_user}
 
       tasks:
-        - task_key: full_refresh_streaming_bronze
+        - task_key: full_refresh
+          condition_task:
+            op: EQUAL_TO
+            left: "{{job.parameters.full_refresh}}"
+            right: "true"
+        - task_key: drop_streaming_tables
+          depends_on:
+            - task_key: full_refresh
+              outcome: "true"
           notebook_task:
-            notebook_path: ../src/fhir-etl-pipeline/00 - Full Refresh Streaming Bronze.ipynb
+            notebook_path: ../src/fhir-etl-pipeline/00 - Drop Streaming Tables.ipynb
             source: WORKSPACE
             warehouse_id: ${var.sql_warehouse_id}
-          description: SQL Scoped notebook used for performing full refreshes of streaming bronze ingestion of FHIR resources.  
+        - task_key: streaming_bronze
+          depends_on:
+            - task_key: full_refresh
+              outcome: "false"
+            - task_key: drop_streaming_tables
+          run_if: AT_LEAST_ONE_SUCCESS
+          notebook_task:
+            notebook_path: ../src/fhir-etl-pipeline/01 - Streaming Bronze.ipynb
+            source: WORKSPACE
+            warehouse_id: ${var.sql_warehouse_id}
+          description: SQL Scoped notebook used for creating or refreshing streaming bronze ingestion of FHIR resources. 
+        - task_key: meta
+          depends_on: 
+            - task_key: streaming_bronze
+          notebook_task:
+            notebook_path: ../src/fhir-etl-pipeline/02 - Meta.ipynb
+            source: WORKSPACE
+            warehouse_id: ${var.sql_warehouse_id}
+          description: SQL Scoped notebook used for parsing the Bundle's file metadata, ingestion time, and Meta object data.
+        - task_key: resources
+          depends_on: 
+            - task_key: streaming_bronze
+          notebook_task:
+            notebook_path: ../src/fhir-etl-pipeline/03 - Resources.ipynb
+            source: WORKSPACE
+            warehouse_id: ${var.sql_warehouse_id}
+          description: SQL Scoped notebook used for exploding the FHIR bundles entry resources and recording their schemas.
+        - task_key: identify_available_resources
+          depends_on: 
+            - task_key: resources
+          notebook_task:
+            notebook_path: ../src/fhir-etl-pipeline/04 - Set Resource Type Task Values.ipynb
+            source: WORKSPACE
+          description: Determines the FHIR entry resource types that have entered the system and sets a dynmaic task value for the forEach task that creates a silver table for each resource.
+        - task_key: silver_variant
+          depends_on:
+            - task_key: identify_available_resources
+          for_each_task:
+            inputs: "{{tasks.identify_available_resources.values.resource_types}}"
+            concurrency: 42
+            task:
+              task_key: silver_variant_iteration
+              notebook_task:
+                notebook_path: ../src/fhir-etl-pipeline/05 - Silver Variant.ipynb
+                base_parameters:
+                  resource_type: "{{input}}"
+                source: WORKSPACE
+                warehouse_id: ${var.sql_warehouse_id}
+
       
+      max_concurrent_runs: 5
       queue:
         enabled: true
       
@@ -36,4 +93,6 @@ resources:
           default: ${var.catalog_use}
         - name: schema_use
           default: ${var.schema_use}
+        - name: full_refresh
+          default: ${var.full_refresh}
         
