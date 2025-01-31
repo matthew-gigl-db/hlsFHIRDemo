@@ -1,6 +1,6 @@
 ```Note that this readme will be updated with run details for the Databricks Health & Life Science FY25 Q4 Interoperability Workshop shortly.  For now please find the demo notebooks in the "src" folder.  The workflow that was triggered from the Redox file arrival may be deployed as a Databricks Asset Bundle, with notebooks found in src/fhir-etl-pipeline.  The Prior Authorization Service Request FHIR Bundle loaded through the ELT pipeline and then reviewed in the demo notebooks can be found in fixtures.```  
 
-```Please contact your Databricks Account Team to learn more including to participate in a hands on workshop in a CloudLabs environment with instruction let by Databricks subject matter experts.``` 
+```The notebooks contained in src/fhir_workshop were recently developed as part of a hands on 'CloudLabs course' where users will all build a streaming FHIR ETL pipeline together.  By the end of the four hour workshop you and your time will have stream ingested 1K FHIR JSONs and eith an AI/BI dashbord for insights.  Please contact your Databricks Account Team to learn more.``` 
 
 # hlsFHIRDemo
 
