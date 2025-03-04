@@ -37,6 +37,25 @@ targets:
       run_as_user: matthew.giglia@databricks.com
       sql_warehouse_id: 148ccb90800933a1
 
+  himss25:
+    mode: production
+    workspace:
+      host: https://e2-demo-field-events.cloud.databricks.com/
+      # We explicitly specify /Workspace/Users/matthew.giglia@databricks.com to make sure we only have a single copy.
+      root_path: /Workspace/Users/${var.run_as_user}/.bundle/${bundle.name}/${bundle.target}
+    permissions:
+      - user_name: ${var.run_as_user}
+        level: CAN_MANAGE
+    run_as:
+      user_name: ${var.run_as_user}
+    variables:
+      catalog_use: redox
+      schema_use: himss25
+      workflow_name: redox_direct_etl_pipeline
+      workflow_trigger_pause_status: UNPAUSED
+      run_as_user: matthew.giglia@databricks.com
+      sql_warehouse_id: 9cc108dc56e4efe9
+
   prod:
     mode: production
     workspace:
