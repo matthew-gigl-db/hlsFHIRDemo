@@ -26,7 +26,7 @@ targets:
       catalog_use: mgiglia
       schema_use: redox
       workflow_name: redox_etl
-      workflow_trigger_pause_status: PAUSED
+      workflow_trigger_pause_status: UNPAUSED
       run_as_user: matthew.giglia@databricks.com
       sql_warehouse_id: 8baced1ff014912d
 
