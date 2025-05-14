@@ -17,6 +17,18 @@ targets:
     default: true
     workspace:
       host: https://e2-demo-field-eng.cloud.databricks.com
+    permissions:
+      - user_name: ${var.run_as_user}
+        level: CAN_MANAGE
+    run_as:
+      user_name: ${var.run_as_user}
+    variables:
+      catalog_use: mgiglia
+      schema_use: redox
+      workflow_name: redox_etl
+      workflow_trigger_pause_status: PAUSED
+      run_as_user: matthew.giglia@databricks.com
+      sql_warehouse_id: 8baced1ff014912d
 
   hls_webinar_fy25q4:
     mode: production
