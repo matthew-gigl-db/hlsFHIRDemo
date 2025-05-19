@@ -85,6 +85,7 @@ resources:
       
       tags:
         dev: ${var.dev_tag}
+        partner: redox
       
       parameters:
         - name: bundle.workspace.file_path
