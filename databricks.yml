@@ -29,7 +29,7 @@ targets:
     permissions:
       - user_name: ${var.run_as_user}
         level: CAN_MANAGE
-      - user_name: users
+      - group_name: users
         level: CAN_VIEW
     run_as:
       user_name: ${var.run_as_user}
