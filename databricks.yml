@@ -18,6 +18,29 @@ targets:
     workspace:
       host: https://e2-demo-field-eng.cloud.databricks.com
 
+  workshop:
+    mode: production
+    workspace:
+      # edit the workshop url for the given Cloud Labs deployment
+      host: https://dbc-857ff670-4c00.cloud.databricks.com/ 
+      # We explicitly specify /Workspace/Users/matthew.giglia@databricks.com to make sure we only have a single copy.
+      root_path: /Workspace/Users/${var.run_as_user}/.bundle/${bundle.name}/${bundle.target}
+    permissions:
+      - user_name: ${var.run_as_user}
+        level: CAN_MANAGE
+      - user_name: users
+        level: CAN_VIEW
+    run_as:
+      user_name: ${var.run_as_user}
+    variables:
+      customer_name: WholeCare
+      catalog_use: fhir_workshop
+      schema_use: synthea
+      workflow_name: Synthea FHIR Ingestion
+      workflow_trigger_pause_status: UNPAUSED
+      run_as_user: odl_instructor_1452233@databrickslabs.com
+      sql_warehouse_id: 148ccb90800933a1
+
   hls_webinar_fy25q4:
     mode: production
     workspace:
@@ -93,6 +116,9 @@ variables:
   full_refresh:
     default: false
     description: Boolean (evaluated as string when inputted as a parameter in a dbutils text widget) to perform a full refresh on all streaming tables.  
+  customer_name:
+    default: Databricks
+    description: The name of the customer that is taking the workshop
 
 
 
