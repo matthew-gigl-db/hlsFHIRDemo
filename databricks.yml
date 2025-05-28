@@ -5,7 +5,8 @@ bundle:
   uuid: a5226c0c-1dee-41da-8302-28250c1506f8
 
 include:
-  - resources/*.yml
+  # - resources/*.yml # Uncomment for demployments other than FHIR Ingestion Workshops
+  - resources/workshop_lab_workspace_setup.job.yml
 
 targets:
   dev:
