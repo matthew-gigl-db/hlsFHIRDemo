@@ -36,7 +36,7 @@ resources:
           depends_on:
             - task_key: bronze
           notebook_task:
-            notebook_path: ../src/FHIR_Workshop/w02b - Resources.ipynb
+            notebook_path: ../src/FHIR_Workshop/w02a - Meta.ipynb
             source: WORKSPACE
             warehouse_id: ${var.sql_warehouse_id}
         - task_key: resources_exploded
