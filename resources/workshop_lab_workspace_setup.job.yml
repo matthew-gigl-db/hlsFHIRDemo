@@ -1,0 +1,14 @@
+resources:
+  jobs:
+    workshop_lab_workspace_setup:
+      name: Workshop Lab Workspace Setup
+      tasks:
+        - task_key: Lab_Workspace_Setup
+          notebook_task:
+            notebook_path: ../src/FHIR_Workshop/setup/Lab Workspace Set Up.ipynb
+            source: WORKSPACE
+      queue:
+        enabled: true
+      parameters:
+        - name: customer_name
+          default: ${var.customer_name}

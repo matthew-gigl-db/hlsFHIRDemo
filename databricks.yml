@@ -39,7 +39,7 @@ targets:
       workflow_name: Synthea FHIR Ingestion
       workflow_trigger_pause_status: UNPAUSED
       run_as_user: odl_instructor_1452233@databrickslabs.com
-      sql_warehouse_id: 148ccb90800933a1
+      sql_warehouse_id: b8e811181cae93c0
 
   hls_webinar_fy25q4:
     mode: production
