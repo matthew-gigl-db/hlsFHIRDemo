@@ -5,7 +5,7 @@ resources:
       trigger: 
         pause_status: UNPAUSED
         file_arrival:
-          url: /Volumes/${var.catalog_use}/${var.schema_use}/landing/
+          url: /Volumes/${var.catalog_use}/${var.schema_use}/synthetic_files_raw/output/fhir/
           min_time_between_triggers_seconds: 600
           wait_after_last_change_seconds: 60
       tasks:
