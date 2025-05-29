@@ -40,6 +40,7 @@ targets:
       schema_use: synthea
       workshop_fhir_ingestion_workflow_name: Synthea FHIR Ingestion
       workflow_trigger_pause_status: UNPAUSED
+      # edit the run as user to be your instructor id 
       run_as_user: odl_instructor_1452233@databrickslabs.com
       sql_warehouse_id: b8e811181cae93c0
 
@@ -113,7 +114,7 @@ variables:
     default: 148ccb90800933a1
     description: The unique Databricks Serverless SQL Warehouse ID for SQL scoped notebooks to execute against.  Note that this is specific per workspace/host.   
   dev_tag: 
-    default: matthew_giglia
+    default: matthew_giglia # odl_instructor_1452233@databrickslabs.com
     description: Automatica development tag for development targets.  
   full_refresh:
     default: false
