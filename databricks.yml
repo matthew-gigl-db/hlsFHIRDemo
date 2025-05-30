@@ -44,7 +44,7 @@ targets:
       # edit the run as user to be your instructor id 
       run_as_user: odl_instructor_1452233@databrickslabs.com
       sql_warehouse_id: b8e811181cae93c0
-      workshop_job_to_lookup: odl_instructor_1452233-synthea-data-generation
+      # workshop_job_to_lookup: odl_instructor_1452233-synthea-data-generation
 
   hls_webinar_fy25q4:
     mode: production
@@ -127,13 +127,13 @@ variables:
   workshop_fhir_ingestion_workflow_name:
     default: Synthea FHIR Ingestion
     description: The name of the FHIR Ingestion workflow for the workshop
-  workshop_job_to_lookup:
-    default: 'matthew_giglia-synthea-data-generation'
-    description: Synthea On DBX Job to Lookup
-  synthe_on_dbx_job_id:
-    description: The snythea on dbx job id deployed
-    lookup:
-      job: ${var.workshop_job_to_lookup}
+  # workshop_job_to_lookup:
+  #   default: 'matthew_giglia-synthea-data-generation'
+  #   description: Synthea On DBX Job to Lookup
+  # synthe_on_dbx_job_id:
+  #   description: The snythea on dbx job id deployed
+  #   lookup:
+  #     job: ${var.workshop_job_to_lookup}
 
 
 
