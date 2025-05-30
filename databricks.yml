@@ -8,7 +8,7 @@ include:
   # - resources/*.yml # Uncomment for demployments other than FHIR Ingestion Workshops
   - resources/workshop_lab_workspace_setup.job.yml
   - resources/workshop_synthea_fhir_ingestion.job.yml
-  - workshop_run_synthea_on_dbx.job.yml
+  - resources/workshop_run_synthea_on_dbx.job.yml
 
 targets:
   dev:
