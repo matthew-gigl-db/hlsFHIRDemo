@@ -3,7 +3,22 @@ resources:
     workshop_run_synthea_on_dbx:
       name: Run Synthea On DBX
       tasks:
+        - task_key: Synthea_Deployment_Check
+          notebook_task:
+            notebook_path: ../src/FHIR_Workshop/setup/Check
+              For Synthea Job Deployment
+            source: WORKSPACE
+        - task_key: Synthea_Deployed_Conditional
+          depends_on:
+            - task_key: Synthea_Deployment_Check
+          condition_task:
+            op: EQUAL_TO
+            left: "{{tasks.Synthea_Deployment_Check.values.job_exists}}"
+            right: "true"
         - task_key: Deploy_Synthea_On_DBX_Workflow
+          depends_on:
+            - task_key: Synthea_Deployed_Conditional
+              outcome: "false"
           notebook_task:
             notebook_path: synthea-on-databricks
             base_parameters:
