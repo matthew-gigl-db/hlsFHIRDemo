@@ -11,7 +11,7 @@ resources:
               schema_name: "{{job.parameters.schema_use}}"
               max_records: "1600"
               min_records: "1500"
-              number_of_job_runs: "0"
+              number_of_job_runs: "1"
               create_landing_zone: "true"
               instance_pool_id: ""
               inject_bad_data: "true"
