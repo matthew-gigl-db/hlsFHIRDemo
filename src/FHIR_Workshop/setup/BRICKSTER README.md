@@ -2,7 +2,7 @@
 ***
 
 1. Turn on all previews
-1. Change the display name of the workspace 
+1. Change the display name of the workspace to "<customer's name> FHIR Ingestion Workshop"
 1. Turn on the following developer settings:
     - New Charts
     - Tabbed Notebooks
@@ -17,4 +17,8 @@
     - File Arrival Trigger Will Kickoff Synthea FHIR Ingestion 
 1. Turn on Data Classification for the fhir_workshop catalog
 1. Turn on Anomaly Detection for the synthea schema
-1. Download 
+1. Download DBPriorAuthExample.json from ~/fixtures
+1. Upload DBPriorAuthExample.json to /Volumes/fhir_workshop/synthea/synthetic_files_raw/output/fhir/
+
+Optional: 
+1. Set up Mosaic Model Serving and SQL UDF for Redox API
