@@ -12,13 +12,15 @@
 1. Update other workspace target variables as necessary
 1. Use DAB in the Workspace interface to deploy the workflows
 1. Execute the following in order:  
-    - Workshop Lab Workspace Setup
-    - Run Synthea on DBX 
-    - File Arrival Trigger Will Kickoff Synthea FHIR Ingestion 
+    - "Workshop Lab Workspace Setup"
+    - "Run Synthea on DBX" 
+    - File Arrival Trigger Will Kickoff "Synthea FHIR Ingestion" 
 1. Turn on Data Classification for the fhir_workshop catalog
 1. Turn on Anomaly Detection for the synthea schema
 1. Download DBPriorAuthExample.json from ~/fixtures
 1. Upload DBPriorAuthExample.json to /Volumes/fhir_workshop/synthea/synthetic_files_raw/output/fhir/
 
 Optional: 
+1. Run "Run Synthea on DBX for the synthea_65K schema with a "run now with different parameters", also changing the max records to 66000 and the min records to 65000
+    - Then run the "Synthea FHIR Ingestion" with a run now with the schema set to synthea_65.  
 1. Set up Mosaic Model Serving and SQL UDF for Redox API
