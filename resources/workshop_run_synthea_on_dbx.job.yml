@@ -38,15 +38,16 @@ resources:
             - task_key: Synthea_Deployed_Conditional
               outcome: "true"
           run_if: AT_LEAST_ONE_SUCCESS
-          run_job_task:
-            job_id: ${var.synthe_on_dbx_job_id}
-            job_parameters:
-              min_records: "{{job.parameters.min_records_override}}"
-              inject_bad_data: "{{job.parameters.inject_bad_data_override}}"
+          notebook_task:
+            notebook_path: ${workspace.root_path}/files/src/FHIR_Workshop/setup/Check For Synthea Job Deployment
+            source: WORKSPACE
+            base_parameters:
+              min_records_override: "{{job.parameters.min_records_override}}"
+              inject_bad_data_override: "{{job.parameters.inject_bad_data_override}}"
               catalog_name: "{{job.parameters.catalog_use}}"
               schema_name: "{{job.parameters.schema_use}}"
-              create_landing_zone: "{{job.parameters.create_landing_zone_override}}"
-              max_records: "{{job.parameters.max_records_override}}"
+              create_landing_zone_override: "{{job.parameters.create_landing_zone_override}}"
+              max_records_override: "{{job.parameters.max_records_override}}"
       git_source:
         git_url: https://github.com/matthew-gigl-db/synthea-on-dbx.git
         git_provider: gitHub
