@@ -1,0 +1,77 @@
+resources:
+  jobs:
+    Example:
+      name: ${var.workshop_fhir_ingestion_workflow_name}
+      trigger: 
+        pause_status: UNPAUSED
+        file_arrival:
+          url: /Volumes/${var.catalog_use}/${var.schema_use}/synthetic_files_raw/output/fhir/
+          min_time_between_triggers_seconds: 600
+          wait_after_last_change_seconds: 60
+      tasks:
+        - task_key: full_refresh_conditional
+          condition_task:
+            op: EQUAL_TO
+            left: "{{job.parameters.full_refresh}}"
+            right: "true"
+        - task_key: drop_streaming_tables
+          depends_on:
+            - task_key: full_refresh_conditional
+              outcome: "true"
+          notebook_task:
+            notebook_path: ../src/FHIR_Workshop/w00 - Drop Streaming Tables.ipynb
+            source: WORKSPACE
+            warehouse_id: ${var.sql_warehouse_id}
+        - task_key: bronze
+          depends_on:
+            - task_key: drop_streaming_tables
+            - task_key: full_refresh_conditional
+              outcome: "false"
+          run_if: AT_LEAST_ONE_SUCCESS
+          notebook_task:
+            notebook_path: ../src/FHIR_Workshop/w01 - Bronze.ipynb
+            source: WORKSPACE
+            warehouse_id: ${var.sql_warehouse_id}
+        - task_key: meta
+          depends_on:
+            - task_key: bronze
+          notebook_task:
+            notebook_path: ../src/FHIR_Workshop/w02a - Meta.ipynb
+            source: WORKSPACE
+            warehouse_id: ${var.sql_warehouse_id}
+        - task_key: resources_exploded
+          depends_on:
+            - task_key: bronze
+          notebook_task:
+            notebook_path: ../src/FHIR_Workshop/w02b - Resources.ipynb
+            source: WORKSPACE
+            warehouse_id: ${var.sql_warehouse_id}
+        - task_key: available_resources
+          depends_on:
+            - task_key: resources_exploded
+          notebook_task:
+            notebook_path: ../src/FHIR_Workshop/w03 - Task Values.ipynb
+            source: WORKSPACE
+        - task_key: silver
+          depends_on:
+            - task_key: available_resources
+          for_each_task:
+            inputs: "{{tasks.available_resources.values.resource_types}}"
+            concurrency: 42
+            task:
+              task_key: silver_iteration
+              notebook_task:
+                notebook_path: ../src/FHIR_Workshop/w04 - Silver.ipynb
+                base_parameters:
+                  resource_type: "{{input}}"
+                source: WORKSPACE
+                warehouse_id: ${var.sql_warehouse_id}
+      queue:
+        enabled: true
+      parameters:
+        - name: catalog_use
+          default: ${var.catalog_use}
+        - name: schema_use
+          default: ${var.schema_use}
+        - name: full_refresh
+          default: ${var.full_refresh}

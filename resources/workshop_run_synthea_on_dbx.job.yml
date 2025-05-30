@@ -1,0 +1,69 @@
+resources:
+  jobs:
+    workshop_run_synthea_on_dbx:
+      name: Run Synthea On DBX
+      tasks:
+        - task_key: Synthea_Deployment_Check
+          notebook_task:
+            notebook_path: ${workspace.root_path}/files/src/FHIR_Workshop/setup/Check For Synthea Job Deployment
+            source: WORKSPACE
+        - task_key: Synthea_Deployed_Conditional
+          depends_on:
+            - task_key: Synthea_Deployment_Check
+          condition_task:
+            op: EQUAL_TO
+            left: "{{tasks.Synthea_Deployment_Check.values.job_exists}}"
+            right: "true"
+        - task_key: Deploy_Synthea_On_DBX_Workflow
+          depends_on:
+            - task_key: Synthea_Deployed_Conditional
+              outcome: "false"
+          notebook_task:
+            notebook_path: synthea-on-databricks
+            base_parameters:
+              catalog_name: "{{job.parameters.catalog_use}}"
+              schema_name: "{{job.parameters.schema_use}}"
+              max_records: "1600"
+              min_records: "1500"
+              number_of_job_runs: "1"
+              create_landing_zone: "true"
+              instance_pool_id: ""
+              inject_bad_data: "true"
+              serverless: "false"
+              run_job: "false"
+            source: GIT
+        - task_key: Generate_Synthetic_Data
+          depends_on:
+            - task_key: Deploy_Synthea_On_DBX_Workflow
+            - task_key: Synthea_Deployed_Conditional
+              outcome: "true"
+          run_if: AT_LEAST_ONE_SUCCESS
+          notebook_task:
+            notebook_path: ${workspace.root_path}/files/src/FHIR_Workshop/setup/Generate Synthethic Data
+            source: WORKSPACE
+            base_parameters:
+              min_records_override: "{{job.parameters.min_records_override}}"
+              inject_bad_data_override: "{{job.parameters.inject_bad_data_override}}"
+              catalog_name: "{{job.parameters.catalog_use}}"
+              schema_name: "{{job.parameters.schema_use}}"
+              create_landing_zone_override: "{{job.parameters.create_landing_zone_override}}"
+              max_records_override: "{{job.parameters.max_records_override}}"
+      git_source:
+        git_url: https://github.com/matthew-gigl-db/synthea-on-dbx.git
+        git_provider: gitHub
+        git_branch: main
+      queue:
+        enabled: true
+      parameters:
+        - name: catalog_use
+          default: ${var.catalog_use}
+        - name: create_landing_zone_override
+          default: "true"
+        - name: max_records_override
+          default: "1600"
+        - name: min_records_override
+          default: "1500"
+        - name: schema_use
+          default: ${var.schema_use}
+        - name: inject_bad_data_override
+          default: "true"

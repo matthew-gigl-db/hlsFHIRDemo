@@ -5,7 +5,10 @@ bundle:
   uuid: a5226c0c-1dee-41da-8302-28250c1506f8
 
 include:
-  - resources/*.yml
+  # - resources/*.yml # Uncomment for demployments other than FHIR Ingestion Workshops
+  - resources/workshop_lab_workspace_setup.job.yml
+  - resources/workshop_synthea_fhir_ingestion.job.yml
+  - resources/workshop_run_synthea_on_dbx.job.yml
 
 targets:
   dev:
@@ -17,6 +20,31 @@ targets:
     default: true
     workspace:
       host: https://e2-demo-field-eng.cloud.databricks.com
+
+  workshop:
+    mode: production
+    workspace:
+      # edit the workshop url for the given Cloud Labs deployment
+      host: https://dbc-857ff670-4c00.cloud.databricks.com/ 
+      # We explicitly specify /Workspace/Users/matthew.giglia@databricks.com to make sure we only have a single copy.
+      root_path: /Workspace/Users/${var.run_as_user}/.bundle/${bundle.name}/${bundle.target}
+    permissions:
+      - user_name: ${var.run_as_user}
+        level: CAN_MANAGE
+      - group_name: users
+        level: CAN_VIEW
+    run_as:
+      user_name: ${var.run_as_user}
+    variables:
+      customer_name: WholeCare
+      catalog_use: fhir_workshop
+      schema_use: synthea
+      workshop_fhir_ingestion_workflow_name: Synthea FHIR Ingestion
+      workflow_trigger_pause_status: UNPAUSED
+      # edit the run as user to be your instructor id 
+      run_as_user: odl_instructor_1452233@databrickslabs.com
+      sql_warehouse_id: b8e811181cae93c0
+      # workshop_job_to_lookup: odl_instructor_1452233-synthea-data-generation
 
   hls_webinar_fy25q4:
     mode: production
@@ -88,11 +116,24 @@ variables:
     default: 148ccb90800933a1
     description: The unique Databricks Serverless SQL Warehouse ID for SQL scoped notebooks to execute against.  Note that this is specific per workspace/host.   
   dev_tag: 
-    default: matthew_giglia
+    default: matthew_giglia # odl_instructor_1452233@databrickslabs.com
     description: Automatica development tag for development targets.  
   full_refresh:
     default: false
     description: Boolean (evaluated as string when inputted as a parameter in a dbutils text widget) to perform a full refresh on all streaming tables.  
+  customer_name:
+    default: Databricks
+    description: The name of the customer that is taking the workshop
+  workshop_fhir_ingestion_workflow_name:
+    default: Synthea FHIR Ingestion
+    description: The name of the FHIR Ingestion workflow for the workshop
+  # workshop_job_to_lookup:
+  #   default: 'matthew_giglia-synthea-data-generation'
+  #   description: Synthea On DBX Job to Lookup
+  # synthe_on_dbx_job_id:
+  #   description: The snythea on dbx job id deployed
+  #   lookup:
+  #     job: ${var.workshop_job_to_lookup}
 
 
 
