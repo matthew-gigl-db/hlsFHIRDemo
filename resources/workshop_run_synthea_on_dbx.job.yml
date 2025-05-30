@@ -32,6 +32,21 @@ resources:
               serverless: "false"
               run_job: "false"
             source: GIT
+        - task_key: Generate_Synthetic_Data
+          depends_on:
+            - task_key: Deploy_Synthea_On_DBX_Workflow
+            - task_key: Synthea_Deployed_Conditional
+              outcome: "true"
+          run_if: AT_LEAST_ONE_SUCCESS
+          run_job_task:
+            job_id: 
+            job_parameters:
+              min_records: "{{job.parameters.min_records_override}}"
+              inject_bad_data: "{{job.parameters.inject_bad_data_override}}"
+              catalog_name: "{{job.parameters.catalog_use}}"
+              schema_name: "{{job.parameters.schema_use}}"
+              create_landing_zone: "{{job.parameters.create_landing_zone_override}}"
+              max_records: "{{job.parameters.max_records_override}}"
       git_source:
         git_url: https://github.com/matthew-gigl-db/synthea-on-dbx.git
         git_provider: gitHub
@@ -41,5 +56,13 @@ resources:
       parameters:
         - name: catalog_use
           default: ${var.catalog_use}
+        - name: create_landing_zone_override
+          default: "true"
+        - name: max_records_override
+          default: "1600"
+        - name: min_records_override
+          default: "1500"
         - name: schema_use
           default: ${var.schema_use}
+        - name: inject_bad_data_override
+          default: "true"

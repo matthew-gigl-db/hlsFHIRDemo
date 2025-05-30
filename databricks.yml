@@ -126,6 +126,10 @@ variables:
   workshop_fhir_ingestion_workflow_name:
     default: Synthea FHIR Ingestion
     description: The name of the FHIR Ingestion workflow for the workshop
+  synthe_on_dbx_job_id:
+    description: The snythea on dbx job id deployed
+    lookup:
+      job: '12.2 shared'
 
 
 
