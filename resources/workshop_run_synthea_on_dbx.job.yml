@@ -1,0 +1,30 @@
+resources:
+  jobs:
+    workshop_run_synthea_on_dbx:
+      name: Run Synthea On DBX
+      tasks:
+        - task_key: Deploy_Synthea_On_DBX_Workflow
+          notebook_task:
+            notebook_path: synthea-on-databricks
+            base_parameters:
+              catalog_name: "{{job.parameters.catalog_use}}"
+              schema_name: "{{job.parameters.schema_use}}"
+              max_records: "1600"
+              min_records: "1500"
+              number_of_job_runs: "0"
+              create_landing_zone: "true"
+              instance_pool_id: ""
+              inject_bad_data: "true"
+              serverless: "false"
+            source: GIT
+      git_source:
+        git_url: https://github.com/matthew-gigl-db/synthea-on-dbx.git
+        git_provider: gitHub
+        git_branch: main
+      queue:
+        enabled: true
+      parameters:
+        - name: catalog_use
+          default: ${var.catalog_use}
+        - name: schema_use
+          default: ${var.schema_use}
