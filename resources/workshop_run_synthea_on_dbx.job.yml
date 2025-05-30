@@ -16,6 +16,7 @@ resources:
               instance_pool_id: ""
               inject_bad_data: "true"
               serverless: "false"
+              run_job: "false"
             source: GIT
       git_source:
         git_url: https://github.com/matthew-gigl-db/synthea-on-dbx.git
