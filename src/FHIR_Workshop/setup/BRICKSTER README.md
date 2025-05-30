@@ -8,6 +8,7 @@
     - Tabbed Notebooks
     - New ETL Multi File Editor 
     - Open Queries in new SQL Editor 
+1. Link your GitHub Account (Optional)
 1. Update the host URL in the databricks.yml for the course workspace
 1. Update other workspace target variables as necessary
 1. Use DAB in the Workspace interface to deploy the workflows
