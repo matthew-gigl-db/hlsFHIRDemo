@@ -457,7 +457,7 @@
       "fullUrl": "https://fhir.redoxengine.com/fhir-sandbox/ServiceRequest/5b3eebbb-f839-4aa3-af66-1f237fa8690a"
     }
   ],
-  "meta": {
+  "Meta": {
     "profile": [
       "https://fhir.redoxengine.com/StructureDefinition/redox-pa-claim-request-bundle"
     ]
