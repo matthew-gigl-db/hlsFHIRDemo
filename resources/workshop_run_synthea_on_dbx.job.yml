@@ -39,7 +39,7 @@ resources:
               outcome: "true"
           run_if: AT_LEAST_ONE_SUCCESS
           run_job_task:
-            job_id: 
+            job_id: ${var.synthe_on_dbx_job_id}
             job_parameters:
               min_records: "{{job.parameters.min_records_override}}"
               inject_bad_data: "{{job.parameters.inject_bad_data_override}}"
