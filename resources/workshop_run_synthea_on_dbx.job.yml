@@ -39,7 +39,7 @@ resources:
               outcome: "true"
           run_if: AT_LEAST_ONE_SUCCESS
           notebook_task:
-            notebook_path: ${workspace.root_path}/files/src/FHIR_Workshop/setup/Check For Synthea Job Deployment
+            notebook_path: ${workspace.root_path}/files/src/FHIR_Workshop/setup/Generate Synthethic Data
             source: WORKSPACE
             base_parameters:
               min_records_override: "{{job.parameters.min_records_override}}"
