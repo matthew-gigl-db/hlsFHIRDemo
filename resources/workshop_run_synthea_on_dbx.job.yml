@@ -5,7 +5,7 @@ resources:
       tasks:
         - task_key: Synthea_Deployment_Check
           notebook_task:
-            notebook_path: ../src/FHIR_Workshop/setup/Check
+            notebook_path: ${bundle.root_path}/src/FHIR_Workshop/setup/Check
               For Synthea Job Deployment
         - task_key: Synthea_Deployed_Conditional
           depends_on:
