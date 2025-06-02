@@ -60,9 +60,9 @@ resources:
         - name: create_landing_zone_override
           default: "true"
         - name: max_records_override
-          default: "1600"
+          default: ${var.workshop_max_records}
         - name: min_records_override
-          default: "1500"
+          default: ${var.workshop_min_records}
         - name: schema_use
           default: ${var.schema_use}
         - name: inject_bad_data_override
