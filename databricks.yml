@@ -12,7 +12,8 @@ include:
   - resources/workshop_lab_workspace_setup.job.yml
   - resources/workshop_run_synthea_on_dbx.job.yml
   # - resources/workshop_synthea_fhir_ingestion.job.yml
-# If deploying outside of a "Workshop Workspace" such as one of the Field Eng environments, please use the "dev" target, otherwise deploy to the "workshop" target.  Please do not deploy to other targets in Field Eng workspaces without express permissoin from Matthew Giglia.  
+# If deploying outside of a "Workshop Workspace" such as one of the Field Eng environments, please use the "dev" target, otherwise deploy to the "workshop" target.  Please do not deploy to other targets in Field Eng workspaces without express permission from Matthew Giglia. 
+
 # Special Deployment Workflows outside of the FHIR Workshop - should remain commented for most Databricks employees.  Do not use without EXPRESS PERMISSION.  
 # - resources/fhirFullEtlPipeline.job.yml
   
@@ -54,7 +55,7 @@ targets:
       run_as_user: matthew.giglia@databricks.com
       # for sql_warehouse_id: 
         # use 4b9b953939869799 for https://e2-demo-field-eng.cloud.databricks.com/
-        # use 148ccb90800933a1 for https://adb-984752964297111.11.azuredatabricks.ne
+        # use 148ccb90800933a1 for https://adb-984752964297111.11.azuredatabricks.net
       sql_warehouse_id: 148ccb90800933a1
 
   workshop:
