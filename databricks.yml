@@ -37,12 +37,13 @@ targets:
     variables:
       customer_name: Field Eng
       catalog_use: fhir_workshop
-      schema_use: ${var.brickster_dev_target_schema_name}
+      schema_use: synthea
       workshop_fhir_ingestion_workflow_name: Synthea FHIR Ingestion
+      workshop_min_records: 1
+      workshop_max_records: 100
       workflow_trigger_pause_status: UNPAUSED
       # edit the run as user to be your instructor id 
       run_as_user: matthew.giglia@databricks.com
-      brickster_dev_target_schema_name: matthew_giglia
       # for sql_warehouse_id: 
         # use 4b9b953939869799 for https://e2-demo-field-eng.cloud.databricks.com/
         # use 148ccb90800933a1 for https://adb-984752964297111.11.azuredatabricks.ne
@@ -155,9 +156,15 @@ variables:
   workshop_fhir_ingestion_workflow_name:
     default: Synthea FHIR Ingestion
     description: The name of the FHIR Ingestion workflow for the workshop
-  brickster_dev_target_schema_name:
-    default: synthea
-    description: The name of the schema that will be created for practice in Field End workspaces.  
+  workshop_min_records:
+    default: 1500
+    description: The minimum number of records for the workshop that Synthea should generate
+  workshop_max_records:
+    default: 1600
+    description: The maximum number of records for the workshop that Synthea should generate
+  # brickster_dev_target_schema_name:
+  #   default: synthea
+  #   description: The name of the schema that will be created for practice in Field End workspaces.  
   # workshop_job_to_lookup:
   #   default: 'matthew_giglia-synthea-data-generation'
   #   description: Synthea On DBX Job to Lookup
