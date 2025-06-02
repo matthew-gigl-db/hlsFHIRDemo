@@ -26,7 +26,7 @@ targets:
     mode: development
     default: true
     workspace:
-      host: https://e2-demo-field-eng.cloud.databricks.com
+      host: https://adb-984752964297111.11.azuredatabricks.net
     permissions:
       - user_name: ${var.run_as_user}
         level: CAN_MANAGE
@@ -43,7 +43,6 @@ targets:
       # edit the run as user to be your instructor id 
       run_as_user: matthew.giglia@databricks.com
       sql_warehouse_id: b8e811181cae93c0
-      # workshop_job_to_lookup: odl_instructor_1452233-synthea-data-generation
 
   workshop:
     mode: production
