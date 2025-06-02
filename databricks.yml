@@ -5,10 +5,17 @@ bundle:
   uuid: a5226c0c-1dee-41da-8302-28250c1506f8
 
 include:
-  # - resources/*.yml # Uncomment for demployments other than FHIR Ingestion Workshops
-  - resources/workshop_lab_workspace_setup.job.yml
-  - resources/workshop_synthea_fhir_ingestion.job.yml
-  - resources/workshop_run_synthea_on_dbx.job.yml
+  # - resources/*.yml 
+# Workshop Resources Deployment Instructions
+# 1. Uncomment "lab workspace set up" and "run synthea on dbx" to deploy and run these workflows first. 
+# 2. The catalog, schema, and volume needed to run the third workflow "synthea fhir ingestion" in created in the first two workflows.  Additionally, if using the SQL Warehouse created in the set up workflow then the sql_warehouse_id variable in the "warehouse" target should be updated prior to running the deploy with all three of the below resources uncommented. Please see all Brickster instructions in ~/src/FHIR_Workshop/setup/Brickster README.md for more information.  
+  # - resources/workshop_lab_workspace_setup.job.yml
+  # - resources/workshop_run_synthea_on_dbx.job.yml
+  # - resources/workshop_synthea_fhir_ingestion.job.yml
+# If deploying outside of a "Workshop Workspace" such as one of the Field Eng environments, please use the "dev" target, otherwise deploy to the "workshop" target.  Please do not deploy to other targets in Field Eng workspaces without express permissoin from Matthew Giglia.  
+# Special Deployment Workflows outside of the FHIR Workshop - should remain commented for most Databricks employees.  Do not use without EXPRESS PERMISSION.  
+- resources/fhirFullEtlPipeline.job.yml
+  
 
 targets:
   dev:
@@ -20,6 +27,23 @@ targets:
     default: true
     workspace:
       host: https://e2-demo-field-eng.cloud.databricks.com
+    permissions:
+      - user_name: ${var.run_as_user}
+        level: CAN_MANAGE
+      - group_name: users
+        level: CAN_VIEW
+    run_as:
+      user_name: ${var.run_as_user}
+    variables:
+      customer_name: Field Eng
+      catalog_use: fhir_workshop
+      schema_use: synthea
+      workshop_fhir_ingestion_workflow_name: Synthea FHIR Ingestion
+      workflow_trigger_pause_status: UNPAUSED
+      # edit the run as user to be your instructor id 
+      run_as_user: matthew.giglia@databricks.com
+      sql_warehouse_id: b8e811181cae93c0
+      # workshop_job_to_lookup: odl_instructor_1452233-synthea-data-generation
 
   workshop:
     mode: production
@@ -61,6 +85,7 @@ targets:
       catalog_use: redox
       schema_use: hls_webinar_fy25q4
       workflow_name: hls_webinar_fy25q4_etl_pipeline
+      workshop_fhir_ingestion_workflow_name: Synthea FHIR Ingestion
       workflow_trigger_pause_status: UNPAUSED
       run_as_user: matthew.giglia@databricks.com
       sql_warehouse_id: 148ccb90800933a1
