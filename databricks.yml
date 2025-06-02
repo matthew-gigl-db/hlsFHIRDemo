@@ -43,7 +43,10 @@ targets:
       # edit the run as user to be your instructor id 
       run_as_user: matthew.giglia@databricks.com
       brickster_dev_target_schema_name: matthew_giglia
-      sql_warehouse_id: b8e811181cae93c0
+      # for sql_warehouse_id: 
+        # use 4b9b953939869799 for https://e2-demo-field-eng.cloud.databricks.com/
+        # use 148ccb90800933a1 for https://adb-984752964297111.11.azuredatabricks.ne
+      sql_warehouse_id: 148ccb90800933a1
 
   workshop:
     mode: production
