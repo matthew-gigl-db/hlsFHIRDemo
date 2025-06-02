@@ -25,7 +25,7 @@ targets:
     # See also https://docs.databricks.com/dev-tools/bundles/deployment-modes.html.
     mode: development
     presets:
-      name_prefix: '[dev ${var.run_as_user}]' 
+      # name_prefix: '[dev ${var.run_as_user}]' 
       pipelines_development: true # set development to true for pipelines
       trigger_pause_status: PAUSED # set pause_status to PAUSED for all triggers and schedules
       jobs_max_concurrent_runs: 1 # set max_concurrent runs to 10 for all jobs
