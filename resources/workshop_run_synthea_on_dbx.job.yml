@@ -23,8 +23,8 @@ resources:
             base_parameters:
               catalog_name: "{{job.parameters.catalog_use}}"
               schema_name: "{{job.parameters.schema_use}}"
-              max_records: "1600"
-              min_records: "1500"
+              max_records: ${var.workshop_max_records}
+              min_records: ${var.workshop_min_records}
               number_of_job_runs: "1"
               create_landing_zone: "true"
               instance_pool_id: ""
