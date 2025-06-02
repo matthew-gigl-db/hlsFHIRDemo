@@ -9,13 +9,13 @@ include:
 # Workshop Resources Deployment Instructions
 # 1. Uncomment "lab workspace set up" and "run synthea on dbx" to deploy and run these workflows first. 
 # 2. The catalog, schema, and volume needed to run the third workflow "synthea fhir ingestion" in created in the first two workflows.  Additionally, if using the SQL Warehouse created in the set up workflow then the sql_warehouse_id variable in the "warehouse" target should be updated prior to running the deploy with all three of the below resources uncommented. Please see all Brickster instructions in ~/src/FHIR_Workshop/setup/Brickster README.md for more information.  
-  - resources/workshop_lab_workspace_setup.job.yml
-  - resources/workshop_run_synthea_on_dbx.job.yml
+  # - resources/workshop_lab_workspace_setup.job.yml
+  # - resources/workshop_run_synthea_on_dbx.job.yml
   # - resources/workshop_synthea_fhir_ingestion.job.yml
 # If deploying outside of a "Workshop Workspace" such as one of the Field Eng environments, please use the "dev" target, otherwise deploy to the "workshop" target.  Please do not deploy to other targets in Field Eng workspaces without express permission from Matthew Giglia. 
 
 # Special Deployment Workflows outside of the FHIR Workshop - should remain commented for most Databricks employees.  Do not use without EXPRESS PERMISSION.  
-# - resources/fhirFullEtlPipeline.job.yml
+- resources/fhirFullEtlPipeline.job.yml
   
 
 targets:
@@ -121,6 +121,25 @@ targets:
       workflow_trigger_pause_status: UNPAUSED
       run_as_user: matthew.giglia@databricks.com
       sql_warehouse_id: 9cc108dc56e4efe9
+
+  DAIS25:
+    mode: production
+    workspace:
+      host: https://db-dais-2025.cloud.databricks.com/
+      # We explicitly specify /Workspace/Users/matthew.giglia@databricks.com to make sure we only have a single copy.
+      root_path: /Workspace/Users/${var.run_as_user}/.bundle/${bundle.name}/${bundle.target}
+    permissions:
+      - user_name: ${var.run_as_user}
+        level: CAN_MANAGE
+    run_as:
+      user_name: ${var.run_as_user}
+    variables:
+      catalog_use: healthcare_lifesciences
+      schema_use: hospital_ops
+      workflow_name: hosp_ops_fhir_ingestion
+      workflow_trigger_pause_status: UNPAUSED
+      run_as_user: matthew.giglia@databricks.com
+      sql_warehouse_id: ddcfd4b37fe1c02a
 
   prod:
     mode: production
