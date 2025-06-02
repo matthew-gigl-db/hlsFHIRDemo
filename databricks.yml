@@ -9,12 +9,12 @@ include:
 # Workshop Resources Deployment Instructions
 # 1. Uncomment "lab workspace set up" and "run synthea on dbx" to deploy and run these workflows first. 
 # 2. The catalog, schema, and volume needed to run the third workflow "synthea fhir ingestion" in created in the first two workflows.  Additionally, if using the SQL Warehouse created in the set up workflow then the sql_warehouse_id variable in the "warehouse" target should be updated prior to running the deploy with all three of the below resources uncommented. Please see all Brickster instructions in ~/src/FHIR_Workshop/setup/Brickster README.md for more information.  
-  # - resources/workshop_lab_workspace_setup.job.yml
-  # - resources/workshop_run_synthea_on_dbx.job.yml
+  - resources/workshop_lab_workspace_setup.job.yml
+  - resources/workshop_run_synthea_on_dbx.job.yml
   # - resources/workshop_synthea_fhir_ingestion.job.yml
 # If deploying outside of a "Workshop Workspace" such as one of the Field Eng environments, please use the "dev" target, otherwise deploy to the "workshop" target.  Please do not deploy to other targets in Field Eng workspaces without express permissoin from Matthew Giglia.  
 # Special Deployment Workflows outside of the FHIR Workshop - should remain commented for most Databricks employees.  Do not use without EXPRESS PERMISSION.  
-- resources/fhirFullEtlPipeline.job.yml
+# - resources/fhirFullEtlPipeline.job.yml
   
 
 targets:
@@ -37,11 +37,12 @@ targets:
     variables:
       customer_name: Field Eng
       catalog_use: fhir_workshop
-      schema_use: synthea
+      schema_use: ${var.brickster_dev_target_schema_name}
       workshop_fhir_ingestion_workflow_name: Synthea FHIR Ingestion
       workflow_trigger_pause_status: UNPAUSED
       # edit the run as user to be your instructor id 
       run_as_user: matthew.giglia@databricks.com
+      brickster_dev_target_schema_name: matthew_giglia
       sql_warehouse_id: b8e811181cae93c0
 
   workshop:
@@ -151,6 +152,9 @@ variables:
   workshop_fhir_ingestion_workflow_name:
     default: Synthea FHIR Ingestion
     description: The name of the FHIR Ingestion workflow for the workshop
+  brickster_dev_target_schema_name:
+    default: synthea
+    description: The name of the schema that will be created for practice in Field End workspaces.  
   # workshop_job_to_lookup:
   #   default: 'matthew_giglia-synthea-data-generation'
   #   description: Synthea On DBX Job to Lookup
