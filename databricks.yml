@@ -124,6 +124,11 @@ targets:
 
   DAIS25:
     mode: production
+    presets:
+      tags:
+        dev: matthew_giglia
+        partner: redox
+        removeAfter: 20251231
     workspace:
       host: https://db-dais-2025.cloud.databricks.com/
       # We explicitly specify /Workspace/Users/matthew.giglia@databricks.com to make sure we only have a single copy.
@@ -131,6 +136,8 @@ targets:
     permissions:
       - user_name: ${var.run_as_user}
         level: CAN_MANAGE
+      - group_name: users
+        level: CAN_VIEW
     run_as:
       user_name: ${var.run_as_user}
     variables:
