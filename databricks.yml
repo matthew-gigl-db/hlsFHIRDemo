@@ -53,7 +53,7 @@ targets:
       workshop_fhir_ingestion_workflow_name: Synthea FHIR Ingestion
       workshop_min_records: 1
       workshop_max_records: 100
-      workflow_trigger_pause_status: UNPAUSED
+      workflow_trigger_pause_status: PAUSED
       # edit the run as user to be your instructor id 
       run_as_user: matthew.giglia@databricks.com
       # for sql_warehouse_id: 
@@ -88,8 +88,9 @@ targets:
       workflow_trigger_pause_status: UNPAUSED
       # edit the run as user to be your instructor id 
       run_as_user: odl_instructor_1452233@databrickslabs.com
+      # identify the sql warehouse created from the Workshop lab Workspace Set Up and Replace below
       sql_warehouse_id: b8e811181cae93c0
-      # workshop_job_to_lookup: odl_instructor_1452233-synthea-data-generation
+
 
   hls_webinar_fy25q4:
     mode: production
@@ -210,13 +211,7 @@ variables:
   # brickster_dev_target_schema_name:
   #   default: synthea
   #   description: The name of the schema that will be created for practice in Field End workspaces.  
-  # workshop_job_to_lookup:
-  #   default: 'matthew_giglia-synthea-data-generation'
-  #   description: Synthea On DBX Job to Lookup
-  # synthe_on_dbx_job_id:
-  #   description: The snythea on dbx job id deployed
-  #   lookup:
-  #     job: ${var.workshop_job_to_lookup}
+
 
 
 
