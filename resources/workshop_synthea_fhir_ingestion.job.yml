@@ -3,7 +3,7 @@ resources:
     Example:
       name: ${var.workshop_fhir_ingestion_workflow_name}
       trigger: 
-        pause_status: UNPAUSED
+        pause_status: ${var.workflow_trigger_pause_status}
         file_arrival:
           url: /Volumes/${var.catalog_use}/${var.schema_use}/synthetic_files_raw/output/fhir/
           min_time_between_triggers_seconds: 600
