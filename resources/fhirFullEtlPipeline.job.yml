@@ -86,6 +86,7 @@ resources:
       tags:
         dev: ${var.dev_tag}
         partner: redox
+        removeAfter: 20261231
       
       parameters:
         - name: bundle.workspace.file_path

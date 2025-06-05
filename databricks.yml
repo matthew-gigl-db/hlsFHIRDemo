@@ -5,10 +5,18 @@ bundle:
   uuid: a5226c0c-1dee-41da-8302-28250c1506f8
 
 include:
-  # - resources/*.yml # Uncomment for demployments other than FHIR Ingestion Workshops
+  # - resources/*.yml 
+# Workshop Resources Deployment Instructions
+# 1. Uncomment "lab workspace set up" and "run synthea on dbx" to deploy and run these workflows first. 
+# 2. The catalog, schema, and volume needed to run the third workflow "synthea fhir ingestion" in created in the first two workflows.  Additionally, if using the SQL Warehouse created in the set up workflow then the sql_warehouse_id variable in the "warehouse" target should be updated prior to running the deploy with all three of the below resources uncommented. Please see all Brickster instructions in ~/src/FHIR_Workshop/setup/Brickster README.md for more information.  
   - resources/workshop_lab_workspace_setup.job.yml
-  - resources/workshop_synthea_fhir_ingestion.job.yml
   - resources/workshop_run_synthea_on_dbx.job.yml
+  # - resources/workshop_synthea_fhir_ingestion.job.yml
+# If deploying outside of a "Workshop Workspace" such as one of the Field Eng environments, please use the "dev" target, otherwise deploy to the "workshop" target.  Please do not deploy to other targets in Field Eng workspaces without express permission from Matthew Giglia. 
+
+# Special Deployment Workflows outside of the FHIR Workshop - should remain commented for most Databricks employees.  Do not use without EXPRESS PERMISSION.  
+  # - resources/fhirFullEtlPipeline.job.yml
+  
 
 targets:
   dev:
@@ -17,16 +25,53 @@ targets:
     # - Any job schedules and triggers are paused by default.
     # See also https://docs.databricks.com/dev-tools/bundles/deployment-modes.html.
     mode: development
+    presets:
+      # name_prefix: '[dev ${var.run_as_user}]' 
+      pipelines_development: true # set development to true for pipelines
+      trigger_pause_status: PAUSED # set pause_status to PAUSED for all triggers and schedules
+      jobs_max_concurrent_runs: 1 # set max_concurrent runs to 1 for all jobs
+      source_linked_deployment: false # default is true normally for development
+      tags:
+        fhir_workshop: true
+        dev: matthew_giglia
+        removeAfter: 20251231
     default: true
     workspace:
-      host: https://e2-demo-field-eng.cloud.databricks.com
+      host: https://adb-984752964297111.11.azuredatabricks.net
+    permissions:
+      - user_name: ${var.run_as_user}
+        level: CAN_MANAGE
+      - group_name: users
+        level: CAN_VIEW
+    run_as:
+      user_name: ${var.run_as_user}
+    variables:
+      customer_name: Field Eng
+      catalog_use: fhir_workshop
+      schema_use: synthea
+      full_refresh: true
+      workshop_fhir_ingestion_workflow_name: Synthea FHIR Ingestion
+      workshop_min_records: 1
+      workshop_max_records: 100
+      workflow_trigger_pause_status: PAUSED
+      # edit the run as user to be your instructor id 
+      run_as_user: matthew.giglia@databricks.com
+      # for sql_warehouse_id: 
+        # use 4b9b953939869799 for https://e2-demo-field-eng.cloud.databricks.com/
+        # use 148ccb90800933a1 for https://adb-984752964297111.11.azuredatabricks.net
+      sql_warehouse_id: 148ccb90800933a1
 
   workshop:
     mode: production
+    presets:
+      tags:
+        fhir_workshop: true
+        dev: matthew_giglia
+        removeAfter: 20261231
     workspace:
       # edit the workshop url for the given Cloud Labs deployment
       host: https://dbc-857ff670-4c00.cloud.databricks.com/ 
-      # We explicitly specify /Workspace/Users/matthew.giglia@databricks.com to make sure we only have a single copy.
+      # We explicitly specify the root_path to make sure we only have a single copy.
       root_path: /Workspace/Users/${var.run_as_user}/.bundle/${bundle.name}/${bundle.target}
     permissions:
       - user_name: ${var.run_as_user}
@@ -43,14 +88,19 @@ targets:
       workflow_trigger_pause_status: UNPAUSED
       # edit the run as user to be your instructor id 
       run_as_user: odl_instructor_1452233@databrickslabs.com
+      # identify the sql warehouse created from the Workshop lab Workspace Set Up and Replace below
       sql_warehouse_id: b8e811181cae93c0
-      # workshop_job_to_lookup: odl_instructor_1452233-synthea-data-generation
+
 
   hls_webinar_fy25q4:
     mode: production
+    presets:
+      tags:
+        dev: matthew_giglia
+        partner: redox
+        removeAfter: 20261231
     workspace:
       host: https://adb-984752964297111.11.azuredatabricks.net/
-      # We explicitly specify /Workspace/Users/matthew.giglia@databricks.com to make sure we only have a single copy.
       root_path: /Workspace/Users/${var.run_as_user}/.bundle/${bundle.name}/${bundle.target}
     permissions:
       - user_name: ${var.run_as_user}
@@ -61,6 +111,7 @@ targets:
       catalog_use: redox
       schema_use: hls_webinar_fy25q4
       workflow_name: hls_webinar_fy25q4_etl_pipeline
+      workshop_fhir_ingestion_workflow_name: Synthea FHIR Ingestion
       workflow_trigger_pause_status: UNPAUSED
       run_as_user: matthew.giglia@databricks.com
       sql_warehouse_id: 148ccb90800933a1
@@ -69,7 +120,6 @@ targets:
     mode: production
     workspace:
       host: https://e2-demo-field-events.cloud.databricks.com/
-      # We explicitly specify /Workspace/Users/matthew.giglia@databricks.com to make sure we only have a single copy.
       root_path: /Workspace/Users/${var.run_as_user}/.bundle/${bundle.name}/${bundle.target}
     permissions:
       - user_name: ${var.run_as_user}
@@ -83,6 +133,31 @@ targets:
       workflow_trigger_pause_status: UNPAUSED
       run_as_user: matthew.giglia@databricks.com
       sql_warehouse_id: 9cc108dc56e4efe9
+
+  DAIS25:
+    mode: production
+    presets:
+      tags:
+        dev: matthew_giglia
+        partner: redox
+        removeAfter: 20251231
+    workspace:
+      host: https://db-dais-2025.cloud.databricks.com/
+      root_path: /Workspace/Users/${var.run_as_user}/.bundle/${bundle.name}/${bundle.target}
+    permissions:
+      - user_name: ${var.run_as_user}
+        level: CAN_MANAGE
+      - group_name: users
+        level: CAN_VIEW
+    run_as:
+      user_name: ${var.run_as_user}
+    variables:
+      catalog_use: healthcare_lifesciences
+      schema_use: hospital_ops
+      workflow_name: hosp_ops_fhir_ingestion
+      workflow_trigger_pause_status: UNPAUSED
+      run_as_user: matthew.giglia@databricks.com
+      sql_warehouse_id: ddcfd4b37fe1c02a
 
   prod:
     mode: production
@@ -127,13 +202,16 @@ variables:
   workshop_fhir_ingestion_workflow_name:
     default: Synthea FHIR Ingestion
     description: The name of the FHIR Ingestion workflow for the workshop
-  # workshop_job_to_lookup:
-  #   default: 'matthew_giglia-synthea-data-generation'
-  #   description: Synthea On DBX Job to Lookup
-  # synthe_on_dbx_job_id:
-  #   description: The snythea on dbx job id deployed
-  #   lookup:
-  #     job: ${var.workshop_job_to_lookup}
+  workshop_min_records:
+    default: 1500
+    description: The minimum number of records for the workshop that Synthea should generate
+  workshop_max_records:
+    default: 1600
+    description: The maximum number of records for the workshop that Synthea should generate
+  # brickster_dev_target_schema_name:
+  #   default: synthea
+  #   description: The name of the schema that will be created for practice in Field End workspaces.  
+
 
 
 
