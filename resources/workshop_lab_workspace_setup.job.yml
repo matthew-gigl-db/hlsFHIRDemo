@@ -7,6 +7,12 @@ resources:
           notebook_task:
             notebook_path: ../src/FHIR_Workshop/setup/Lab Workspace Set Up.ipynb
             source: WORKSPACE
+        - task_key: Addition
+          notebook_task:
+            notebook_path: ../src/FHIR_Workshop/setup/Addition.ipynb
+            source: WORKSPACE
+          depends_on:
+            - task_key: Lab_Workspace_Setup
       queue:
         enabled: true
       parameters:
