@@ -11,7 +11,7 @@ include:
 # 2. The catalog, schema, and volume needed to run the third workflow "synthea fhir ingestion" in created in the first two workflows.  Additionally, if using the SQL Warehouse created in the set up workflow then the sql_warehouse_id variable in the "warehouse" target should be updated prior to running the deploy with all three of the below resources uncommented. Please see all Brickster instructions in ~/src/FHIR_Workshop/setup/Brickster README.md for more information.  
   - resources/workshop_lab_workspace_setup.job.yml
   - resources/workshop_run_synthea_on_dbx.job.yml
-  # - resources/workshop_synthea_fhir_ingestion.job.yml
+  - resources/workshop_synthea_fhir_ingestion.job.yml
 # If deploying outside of a "Workshop Workspace" such as one of the Field Eng environments, please use the "dev" target, otherwise deploy to the "workshop" target.  Please do not deploy to other targets in Field Eng workspaces without express permission from Matthew Giglia. 
 
 # Special Deployment Workflows outside of the FHIR Workshop - should remain commented for most Databricks employees.  Do not use without EXPRESS PERMISSION.  
