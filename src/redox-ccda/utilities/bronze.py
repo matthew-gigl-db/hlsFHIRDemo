@@ -72,7 +72,7 @@ class Bronze:
           return (self.spark.readStream
             .format("cloudFiles")
             .option("cloudFiles.format", "text")
-            .option("cloudFiles.")
+            .option("cloudFiles.wholeText", "true")
             .option("cloudFiles.cleanSource", "MOVE")
             .option("cloudFiles.cleanSource.moveDestination", self.cleanSource_moveDestination)
             .option("cloudFiles.cleanSource.retentionDuration", self.cleanSource_retentionDuration)
