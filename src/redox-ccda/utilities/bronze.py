@@ -81,7 +81,7 @@ class Bronze:
           )
 
     def to_dict(self):
-        return {"spark": self.spark, "catalog": self.catalog, "schema": self.schema, "volume": self.volume, "volume_sub_path": self.volume_sub_path, "file_type": self.file_type,  "cleanSource_moveDestination": self.cleanSource_moveDestination, "cleanSource_retentionDuration": self.cleanSource_retentionDuration"}
+        return {"spark": self.spark, "catalog": self.catalog, "schema": self.schema, "volume": self.volume, "volume_sub_path": self.volume_sub_path, "file_type": self.file_type,  "cleanSource_moveDestination": self.cleanSource_moveDestination, "cleanSource_retentionDuration": self.cleanSource_retentionDuration}
 
     @classmethod
     def from_dict(cls, data):
