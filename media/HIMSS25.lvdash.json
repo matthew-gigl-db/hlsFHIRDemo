@@ -1,1 +1,1395 @@
-{"datasets":[{"name":"9d66c737","displayName":"appointment","query":"SELECT * FROM redox.hls_webinar_fy25q4.appointment"},{"name":"e373ecec","displayName":"documentreference","query":"SELECT * FROM redox.hls_webinar_fy25q4.documentreference"},{"name":"39a53b0b","displayName":"encounter","query":"SELECT * FROM redox.hls_webinar_fy25q4.encounter"},{"name":"96e00b52","displayName":"location","query":"SELECT * FROM redox.hls_webinar_fy25q4.location"},{"name":"ba5eebad","displayName":"medicationrequest","query":"SELECT * FROM redox.hls_webinar_fy25q4.medicationrequest"},{"name":"f2ebebb5","displayName":"messageheader","query":"SELECT * FROM redox.hls_webinar_fy25q4.messageheader"},{"name":"4b8f87de","displayName":"meta","query":"SELECT * FROM redox.hls_webinar_fy25q4.meta"},{"name":"0df56fb5","displayName":"observation","query":"SELECT * FROM redox.hls_webinar_fy25q4.observation"},{"name":"d1f135cb","displayName":"organization","query":"SELECT * FROM redox.hls_webinar_fy25q4.organization"},{"name":"3a47b3b5","displayName":"patient","query":"SELECT * FROM redox.hls_webinar_fy25q4.patient"},{"name":"71cf3f67","displayName":"practitioner","query":"SELECT * FROM redox.hls_webinar_fy25q4.practitioner"},{"name":"a4c0ae75","displayName":"servicerequest","query":"SELECT * FROM redox.hls_webinar_fy25q4.servicerequest"},{"name":"fa1f765d","displayName":"Bundle Meta - DataModel Summary","query":"select\n  DataModel::string as DataModel\n  ,EventType::string as EventType\n  ,count(*) as cnt\nfrom \n  redox.hls_webinar_fy25q4.meta\ngroup by \n  DataModel::string\n  ,EventType::string\norder by \n  cnt desc"},{"name":"f2d9ce00","displayName":"Healthcare Patient Demographics Dataset","query":"select distinct\n  Case when id::string is not null then id::string else Patient_url end as patient_id,\n  birthdate::date as birthdate,\n  floor(datediff(current_date(), birthdate::date) / 365.25) as age,\n  gender::string as gender,\n  address:[0].city::string as city,\n  address:[0].state::string as state,\n  address:[0].postalCode::string as postalCode,\n  address:[0].extension[0].extension[0].valueDecimal::double as latitude,\n  address:[0].extension[0].extension[1].valueDecimal::double as longitude,\n  communication:[0].language.text::string as primary_language,\n  extension:[0].extension[0].valueCoding.display::string as race\nfrom redox.hls_webinar_fy25q4.patient"},{"name":"db0a6137","displayName":"fhir_bronze_variant","query":"SELECT * FROM redox.hls_webinar_fy25q4.fhir_bronze_variant"},{"name":"cec3636e","displayName":"Claim Details","query":"with claim_fixed as (\n  select distinct\n    bundle_uuid\n    ,id::string as claim_id\n    ,use::string as use\n    ,array(\n      diagnosis:[0].diagnosisCodeableConcept.coding[0].code::string\n      ,diagnosis:[1].diagnosisCodeableConcept.coding[0].code::string\n      ,diagnosis:[2].diagnosisCodeableConcept.coding[0].code::string\n    ) as diag_codes\n    ,diagnosis:[0].diagnosisCodeableConcept.coding[0].code::string as primary_diag_code\n    ,priority:coding[0].code::string as priority\n    ,type:coding[0].code::string as claim_type\n  from \n    redox.hls_webinar_fy25q4.claim\n  where\n    bundle_uuid = :bundle_uuid\n)\nselect \n  *\n  ,ai_query(\n    endpoint => 'databricks-meta-llama-3-3-70b-instruct'\n    ,request => \"Lookup the ICD10 CM code descriptions for ('\" \n      || array_join(diag_codes, \"', '\" ) \n      || \"'). Then summarize the claims diagnosis findings in less than 250 characters.'\"\n    ,returnType => 'STRING'\n  ) AS diagnosis_code_summary\nfrom claim_fixed","parameters":[{"displayName":"bundle_uuid","keyword":"bundle_uuid","dataType":"STRING","defaultSelection":{"values":{"dataType":"STRING","values":[{"value":"a710df7d-92b8-4e3e-99ca-b5df37808bc9"}]}}}]},{"name":"f2788355","displayName":"claim","query":"SELECT * FROM redox.hls_webinar_fy25q4.claim"},{"name":"1de925ce","displayName":"Encounter Data Extraction for Analysis","query":"select \n    case when id::string is not null then id::string else encounter_url end as encounter_id\n    ,type:[0].text::string as primary_encounter_type\n    ,class:code::string as encounter_class\n    ,split(appointment:[0].reference::string, \"/\")[1] as appointment_id\n    ,reasonCode:[0].coding[0].display::string as primary_reason\n    ,location:[0].location.display::string as primary_location\n    ,period:start::timestamp as encounter_start\n    ,period:end::timestamp as encounter_end\n    ,status::string as encounter_status\n    ,datediff(MINUTE, period:start::timestamp, period:end::timestamp) as duration_minutes\nfrom redox.hls_webinar_fy25q4.encounter"},{"name":"947e2cb7","displayName":"Claim Use","query":"select distinct \n  bundle_uuid\n  ,id::string as claim_id\n  ,use::string as use\nfrom \n  redox.hls_webinar_fy25q4.claim"},{"name":"7052e0ec","displayName":"Claim Use Distinct Values","query":"select distinct use::string as claim_use from redox.hls_webinar_fy25q4.claim;"},{"name":"cfe4a820","displayName":"Claim Fixed","query":"select distinct\n  bundle_uuid\n  ,id::string as claim_id\n  ,use::string as use\n  ,total:value::double as total_claim_amount\n  ,item:[0].productOrService.text::string as primary_product_or_service\n  ,array(\n    diagnosis:[0].diagnosisCodeableConcept.coding[0].code::string\n    ,diagnosis:[1].diagnosisCodeableConcept.coding[0].code::string\n    ,diagnosis:[2].diagnosisCodeableConcept.coding[0].code::string\n  ) as diag_codes\n  ,diagnosis:[0].diagnosisCodeableConcept.coding[0].code::string as primary_diag_code\n  ,priority:coding[0].code::string as priority\n  ,type:coding[0].code::string as claim_type\nfrom \n  redox.hls_webinar_fy25q4.claim\nwhere\n  array_contains(:use, use::string)","parameters":[{"displayName":"use","keyword":"use","dataType":"STRING","complexType":"MULTI","defaultSelection":{"values":{"dataType":"STRING","values":[{"value":"claim"},{"value":"preauthorization"}]}}}]}],"pages":[{"name":"1ef43ca5","displayName":"Bundle Meta","layout":[{"widget":{"name":"1ca0d811","textbox_spec":"##  Databricks Health & Life Science HIMSS25\n# Redox Direct Integration Streaming FHIR Ingestion \n### Bundle & ETL Pipeline Meta Data"},"position":{"x":0,"y":0,"width":4,"height":2}},{"widget":{"name":"20a1b88d","queries":[{"name":"main_query","query":{"datasetName":"db0a6137","fields":[{"name":"count(*)","expression":"COUNT(`*`)"}],"disaggregated":false}}],"spec":{"version":2,"widgetType":"counter","encodings":{"value":{"fieldName":"count(*)","format":{"type":"number-plain","abbreviation":"compact","decimalPlaces":{"type":"max","places":2}},"style":{"fontSize":48,"color":"#FFAB00","rules":[{"condition":{"operator":">="},"color":"#00A972"}]},"displayName":"Count of Records"}},"frame":{"showTitle":true,"showDescription":false,"title":"Total FHIR Bundles Ingested from Redox","description":"Count of bundle_uuid","headerAlignment":"center"}}},"position":{"x":4,"y":0,"width":2,"height":2}},{"widget":{"name":"320c09be","queries":[{"name":"main_query","query":{"datasetName":"4b8f87de","fields":[{"name":"count(*)","expression":"COUNT(`*`)"},{"name":"EventType","expression":"`EventType`"}],"disaggregated":false}}],"spec":{"version":3,"widgetType":"bar","encodings":{"x":{"fieldName":"count(*)","scale":{"type":"quantitative"},"displayName":"Count of Records"},"y":{"fieldName":"EventType","scale":{"type":"categorical"},"displayName":"EventType"}},"frame":{"showTitle":true,"showDescription":false,"title":"Distribution of Event Types ","description":"","headerAlignment":"center"}}},"position":{"x":0,"y":2,"width":2,"height":10}},{"widget":{"name":"bdb28564","queries":[{"name":"main_query","query":{"datasetName":"db0a6137","fields":[{"name":"hourly(ingest_time)","expression":"DATE_TRUNC(\"HOUR\", `ingest_time`)"},{"name":"countdistinct(bundle_uuid)","expression":"COUNT(DISTINCT `bundle_uuid`)"}],"disaggregated":false}}],"spec":{"version":1,"widgetType":"combo","encodings":{"x":{"fieldName":"hourly(ingest_time)","scale":{"type":"temporal"},"displayName":"ingest_time"},"y":{"primary":{"fields":[{"fieldName":"countdistinct(bundle_uuid)","displayName":"Count of Unique bundle_uuid"}]},"secondary":{"fields":[{"fieldName":"countdistinct(bundle_uuid)","displayName":"Count of Unique bundle_uuid"}]},"scale":{"type":"quantitative"}},"color":{"legend":{"position":"bottom","hideTitle":true,"hide":true}}},"mark":{"colors":["#FF3621","#FFAB00","#00A972","#FF3621","#8BCAE7","#AB4057","#99DDB4","#FCA4A1","#919191","#BF7080"]},"frame":{"title":"Ingest Time Trends","showTitle":true,"headerAlignment":"center"}}},"position":{"x":0,"y":12,"width":6,"height":6}},{"widget":{"name":"0c3a2b37","queries":[{"name":"main_query","query":{"datasetName":"fa1f765d","fields":[{"name":"sum(cnt)","expression":"SUM(`cnt`)"},{"name":"DataModel","expression":"`DataModel`"},{"name":"EventType","expression":"`EventType`"}],"disaggregated":false}}],"spec":{"version":3,"widgetType":"heatmap","encodings":{"x":{"fieldName":"DataModel","scale":{"type":"categorical"},"axis":{"labelAngle":45},"displayName":"DataModel"},"y":{"fieldName":"EventType","scale":{"type":"categorical"},"axis":{"labelAngle":90},"displayName":"EventType"},"color":{"fieldName":"sum(cnt)","scale":{"type":"quantitative","colorRamp":{"mode":"scheme","scheme":"greens"}},"displayName":"Sum of cnt"},"label":{"show":false}},"frame":{"showTitle":true,"title":"Distribution of EventType by DataModel","headerAlignment":"center"}}},"position":{"x":2,"y":2,"width":4,"height":10}}],"pageType":"PAGE_TYPE_CANVAS"},{"name":"5d6c2cf5","displayName":"Patient Details","layout":[{"widget":{"name":"2f42d146","textbox_spec":"##  Databricks Health & Life Science FY25 Q4 Webinar\n# Redox Direct Integration Streaming FHIR Ingestion \n### Patient Details"},"position":{"x":0,"y":0,"width":4,"height":2}},{"widget":{"name":"e5948c1a","queries":[{"name":"main_query","query":{"datasetName":"f2d9ce00","fields":[{"name":"countdistinct(patient_id)","expression":"COUNT(DISTINCT `patient_id`)"}],"disaggregated":false}}],"spec":{"version":2,"widgetType":"counter","encodings":{"value":{"fieldName":"countdistinct(patient_id)","displayName":"Count of Unique patient_id"}},"frame":{"showTitle":true,"title":"Distinct Patient Count"}}},"position":{"x":4,"y":0,"width":2,"height":2}},{"widget":{"name":"f8c166a6","queries":[{"name":"main_query","query":{"datasetName":"f2d9ce00","fields":[{"name":"percentile(age, percentage=0_5)","expression":"PERCENTILE(`age`, 0.5)"},{"name":"latitude","expression":"`latitude`"},{"name":"longitude","expression":"`longitude`"},{"name":"patient_id","expression":"`patient_id`"},{"name":"gender","expression":"`gender`"},{"name":"age","expression":"`age`"}],"disaggregated":false}}],"spec":{"version":2,"widgetType":"symbol-map","encodings":{"coordinates":{"latitude":{"fieldName":"latitude","displayName":"latitude"},"longitude":{"fieldName":"longitude","displayName":"longitude"}},"color":{"fieldName":"percentile(age, percentage=0_5)","scale":{"type":"quantitative","colorRamp":{"mode":"scheme","scheme":"sinebow"}},"legend":{"title":"Primary Language"},"displayName":"Primary Language"},"extra":[{"fieldName":"patient_id","displayName":"patient_id"},{"fieldName":"gender","displayName":"gender"},{"fieldName":"age","displayName":"age"}]},"frame":{"showTitle":true,"title":"Patient Primary Address"},"mark":{"opacity":1}}},"position":{"x":3,"y":2,"width":3,"height":11}},{"widget":{"name":"55c85920","queries":[{"name":"main_query","query":{"datasetName":"f2d9ce00","fields":[{"name":"gender","expression":"`gender`"},{"name":"min(age)","expression":"MIN(`age`)"},{"name":"q1(age)","expression":"PERCENTILE(`age`, 0.25)"},{"name":"median(age)","expression":"MEDIAN(`age`)"},{"name":"q3(age)","expression":"PERCENTILE(`age`, 0.75)"},{"name":"max(age)","expression":"MAX(`age`)"}],"disaggregated":false}}],"spec":{"version":3,"widgetType":"box","encodings":{"x":{"fieldName":"gender","scale":{"type":"categorical"},"displayName":"gender"},"y":{"whiskerStart":{"fieldName":"min(age)","displayName":"Minimum age"},"boxStart":{"fieldName":"q1(age)","displayName":"First Quartile of age"},"boxMid":{"fieldName":"median(age)","displayName":"Median of age"},"boxEnd":{"fieldName":"q3(age)","displayName":"Third Quartile of age"},"whiskerEnd":{"fieldName":"max(age)","displayName":"Maximum age"},"axis":{"title":"age"},"scale":{"type":"quantitative"}}}}},"position":{"x":0,"y":2,"width":3,"height":5}},{"widget":{"name":"b2b1f16d","queries":[{"name":"main_query","query":{"datasetName":"f2d9ce00","fields":[{"name":"count(*)","expression":"COUNT(`*`)"},{"name":"primary_language","expression":"`primary_language`"}],"disaggregated":false}}],"spec":{"version":3,"widgetType":"pie","encodings":{"angle":{"fieldName":"count(*)","scale":{"type":"quantitative"},"displayName":"Count of Records"},"color":{"fieldName":"primary_language","scale":{"type":"categorical"},"displayName":"primary_language"},"label":{"show":true}}}},"position":{"x":0,"y":7,"width":3,"height":6}},{"widget":{"name":"1ced5396","queries":[{"name":"main_query","query":{"datasetName":"0df56fb5","disaggregated":false}}],"spec":{"version":3,"widgetType":"bar","encodings":{}}},"position":{"x":0,"y":13,"width":3,"height":6}}],"pageType":"PAGE_TYPE_CANVAS"},{"name":"39a95afd","displayName":"Encounters","layout":[{"widget":{"name":"f160c4c2","textbox_spec":"##  Databricks Health & Life Science FY25 Q4 Webinar\n# Redox Direct Integration Streaming FHIR Ingestion \n### Encounters"},"position":{"x":0,"y":0,"width":4,"height":2}},{"widget":{"name":"ae71f2c3","queries":[{"name":"main_query","query":{"datasetName":"1de925ce","fields":[{"name":"count(encounter_id)","expression":"COUNT(`encounter_id`)"}],"disaggregated":false}}],"spec":{"version":2,"widgetType":"counter","encodings":{"value":{"fieldName":"count(encounter_id)","style":{"rules":[{"condition":{"operator":"="},"color":"#00A972"}]},"displayName":"Count of encounter_id"}},"frame":{"showTitle":true,"title":"Total Encounters"}}},"position":{"x":4,"y":0,"width":2,"height":2}},{"widget":{"name":"28086234","queries":[{"name":"main_query","query":{"datasetName":"1de925ce","fields":[{"name":"monthly(encounter_start)","expression":"DATE_TRUNC(\"MONTH\", `encounter_start`)"},{"name":"count(encounter_id)","expression":"COUNT(`encounter_id`)"}],"disaggregated":false}}],"spec":{"version":3,"widgetType":"bar","encodings":{"x":{"fieldName":"monthly(encounter_start)","scale":{"type":"temporal"},"axis":{"title":"Encounter Start Month"},"displayName":"Encounter Start Month"},"y":{"fieldName":"count(encounter_id)","scale":{"type":"quantitative"},"axis":{"title":"Monthly Encounter Count"},"displayName":"Monthly Encounter Count"},"label":{"show":false}},"mark":{"colors":["#00A972","#FFAB00","#00A972","#FF3621","#8BCAE7","#AB4057","#99DDB4","#FCA4A1","#919191","#BF7080"]}}},"position":{"x":0,"y":8,"width":6,"height":6}},{"widget":{"name":"3153e960","queries":[{"name":"main_query","query":{"datasetName":"1de925ce","fields":[{"name":"encounter_class","expression":"`encounter_class`"},{"name":"min(duration_minutes)","expression":"MIN(`duration_minutes`)"},{"name":"q1(duration_minutes)","expression":"PERCENTILE(`duration_minutes`, 0.25)"},{"name":"median(duration_minutes)","expression":"MEDIAN(`duration_minutes`)"},{"name":"q3(duration_minutes)","expression":"PERCENTILE(`duration_minutes`, 0.75)"},{"name":"max(duration_minutes)","expression":"MAX(`duration_minutes`)"}],"filters":[{"expression":"`encounter_class` IN ('AMB', 'EMER', 'HH', 'IMP', 'VR')"}],"disaggregated":false}}],"spec":{"version":3,"widgetType":"box","encodings":{"x":{"fieldName":"encounter_class","scale":{"type":"categorical"},"axis":{"title":"Encounter Class"},"displayName":"Encounter Class"},"y":{"whiskerStart":{"fieldName":"min(duration_minutes)","displayName":"Minimum duration_minutes"},"boxStart":{"fieldName":"q1(duration_minutes)","displayName":"First Quartile of duration_minutes"},"boxMid":{"fieldName":"median(duration_minutes)","displayName":"Median of duration_minutes"},"boxEnd":{"fieldName":"q3(duration_minutes)","displayName":"Third Quartile of duration_minutes"},"whiskerEnd":{"fieldName":"max(duration_minutes)","displayName":"Maximum duration_minutes"},"axis":{"title":"Duration in Minutes"},"scale":{"type":"quantitative","fn":{"type":"symlog"},"reverse":false}}},"frame":{"showTitle":true,"title":"Distribution of Encounter Duration in Minutes by Class"}}},"position":{"x":3,"y":2,"width":3,"height":6}},{"widget":{"name":"0b6f570c","queries":[{"name":"main_query","query":{"datasetName":"1de925ce","fields":[{"name":"encounter_status","expression":"`encounter_status`"},{"name":"count(*)","expression":"COUNT(`*`)"}],"disaggregated":false}}],"spec":{"version":3,"widgetType":"area","encodings":{"x":{"fieldName":"encounter_status","scale":{"type":"categorical"},"displayName":"encounter_status"},"y":{"fieldName":"count(*)","scale":{"type":"quantitative"},"displayName":"Count of Records"}},"mark":{"colors":["#AB4057","#FFAB00","#00A972","#FF3621","#8BCAE7","#AB4057","#99DDB4","#FCA4A1","#919191","#BF7080"]}}},"position":{"x":0,"y":2,"width":3,"height":6}}],"pageType":"PAGE_TYPE_CANVAS"},{"name":"a7e10919","displayName":"Claims","layout":[{"widget":{"name":"576e38fd","textbox_spec":"##  Databricks Health & Life Science FY25 Q4 Webinar\n# Redox Direct Integration Streaming FHIR Ingestion \n### Claims Analysis"},"position":{"x":0,"y":0,"width":4,"height":2}},{"widget":{"name":"2ae52424","queries":[{"name":"main_query","query":{"datasetName":"f2788355","fields":[{"name":"count(*)","expression":"COUNT(`*`)"}],"disaggregated":false}}],"spec":{"version":2,"widgetType":"counter","encodings":{"value":{"fieldName":"count(*)","style":{"color":"#FCA4A1"},"displayName":"Count of Records"}},"frame":{"showTitle":true,"title":"Claim Record Count"}}},"position":{"x":4,"y":0,"width":2,"height":2}},{"widget":{"name":"0002daf0","queries":[{"name":"dashboards/01efdc0d04131b7d95c93efbe6583969/datasets/01efdc2cfa971a5b9aaa813393aac411_use","query":{"datasetName":"f2788355","fields":[{"name":"use","expression":"`use`"},{"name":"use_associativity","expression":"COUNT_IF(`associative_filter_predicate_group`)"}],"disaggregated":false}},{"name":"parameter_dashboards/01efdc0d04131b7d95c93efbe6583969/datasets/01efdc824f641bdf9d521c5f1c3d7322_use","query":{"datasetName":"cfe4a820","parameters":[{"name":"use","keyword":"use"}],"disaggregated":false}}],"spec":{"version":2,"widgetType":"filter-single-select","encodings":{"fields":[{"fieldName":"use","displayName":"use","queryName":"dashboards/01efdc0d04131b7d95c93efbe6583969/datasets/01efdc2cfa971a5b9aaa813393aac411_use"},{"parameterName":"use","queryName":"parameter_dashboards/01efdc0d04131b7d95c93efbe6583969/datasets/01efdc824f641bdf9d521c5f1c3d7322_use"}]},"disallowAll":false,"frame":{"showTitle":true,"title":""}}},"position":{"x":4,"y":2,"width":2,"height":1}},{"widget":{"name":"8b159c68","queries":[{"name":"main_query","query":{"datasetName":"cfe4a820","fields":[{"name":"bundle_uuid","expression":"`bundle_uuid`"},{"name":"use","expression":"`use`"},{"name":"claim_type","expression":"`claim_type`"},{"name":"primary_product_or_service","expression":"`primary_product_or_service`"}],"disaggregated":true}}],"spec":{"version":1,"widgetType":"table","encodings":{"columns":[{"fieldName":"bundle_uuid","booleanValues":["false","true"],"imageUrlTemplate":"{{ @ }}","imageTitleTemplate":"{{ @ }}","imageWidth":"","imageHeight":"","linkUrlTemplate":"{{ @ }}","linkTextTemplate":"{{ @ }}","linkTitleTemplate":"{{ @ }}","linkOpenInNewTab":true,"type":"string","displayAs":"string","visible":true,"order":0,"title":"bundle_uuid","allowSearch":false,"alignContent":"left","allowHTML":false,"highlightLinks":false,"useMonospaceFont":false,"preserveWhitespace":false,"displayName":"bundle_uuid"},{"fieldName":"use","booleanValues":["false","true"],"imageUrlTemplate":"{{ @ }}","imageTitleTemplate":"{{ @ }}","imageWidth":"","imageHeight":"","linkUrlTemplate":"{{ @ }}","linkTextTemplate":"{{ @ }}","linkTitleTemplate":"{{ @ }}","linkOpenInNewTab":true,"type":"string","displayAs":"string","visible":true,"order":1,"title":"Use","allowSearch":false,"alignContent":"left","allowHTML":false,"highlightLinks":false,"useMonospaceFont":false,"preserveWhitespace":false,"description":"Use","displayName":"use"},{"fieldName":"claim_type","booleanValues":["false","true"],"imageUrlTemplate":"{{ @ }}","imageTitleTemplate":"{{ @ }}","imageWidth":"","imageHeight":"","linkUrlTemplate":"{{ @ }}","linkTextTemplate":"{{ @ }}","linkTitleTemplate":"{{ @ }}","linkOpenInNewTab":true,"type":"string","displayAs":"string","visible":true,"order":7,"title":"Claim Type","allowSearch":false,"alignContent":"left","allowHTML":false,"highlightLinks":false,"useMonospaceFont":false,"preserveWhitespace":false,"description":"Claim Type","displayName":"claim_type"},{"fieldName":"primary_product_or_service","booleanValues":["false","true"],"imageUrlTemplate":"{{ @ }}","imageTitleTemplate":"{{ @ }}","imageWidth":"","imageHeight":"","linkUrlTemplate":"{{ @ }}","linkTextTemplate":"{{ @ }}","linkTitleTemplate":"{{ @ }}","linkOpenInNewTab":true,"type":"string","displayAs":"string","visible":true,"order":8,"title":"Primary Product or Service","allowSearch":false,"alignContent":"left","allowHTML":false,"highlightLinks":false,"useMonospaceFont":false,"preserveWhitespace":false,"description":"Primary Product or Service","displayName":"primary_product_or_service"}]},"invisibleColumns":[{"booleanValues":["false","true"],"imageUrlTemplate":"{{ @ }}","imageTitleTemplate":"{{ @ }}","imageWidth":"","imageHeight":"","linkUrlTemplate":"{{ @ }}","linkTextTemplate":"{{ @ }}","linkTitleTemplate":"{{ @ }}","linkOpenInNewTab":true,"name":"priority","type":"string","displayAs":"string","order":2,"title":"priority","allowSearch":false,"alignContent":"left","allowHTML":false,"highlightLinks":false,"useMonospaceFont":false,"preserveWhitespace":false},{"booleanValues":["false","true"],"imageUrlTemplate":"{{ @ }}","imageTitleTemplate":"{{ @ }}","imageWidth":"","imageHeight":"","linkUrlTemplate":"{{ @ }}","linkTextTemplate":"{{ @ }}","linkTitleTemplate":"{{ @ }}","linkOpenInNewTab":true,"name":"claim_id","type":"string","displayAs":"string","order":3,"title":"claim_id","allowSearch":false,"alignContent":"left","allowHTML":false,"highlightLinks":false,"useMonospaceFont":false,"preserveWhitespace":false},{"booleanValues":["false","true"],"imageUrlTemplate":"{{ @ }}","imageTitleTemplate":"{{ @ }}","imageWidth":"","imageHeight":"","linkUrlTemplate":"{{ @ }}","linkTextTemplate":"{{ @ }}","linkTitleTemplate":"{{ @ }}","linkOpenInNewTab":true,"name":"diag_codes","type":"complex","displayAs":"json","order":4,"title":"diag_codes","allowSearch":false,"alignContent":"left","allowHTML":false,"highlightLinks":false,"useMonospaceFont":false,"preserveWhitespace":false},{"numberFormat":"0.00","booleanValues":["false","true"],"imageUrlTemplate":"{{ @ }}","imageTitleTemplate":"{{ @ }}","imageWidth":"","imageHeight":"","linkUrlTemplate":"{{ @ }}","linkTextTemplate":"{{ @ }}","linkTitleTemplate":"{{ @ }}","linkOpenInNewTab":true,"name":"total_claim_amount","type":"float","displayAs":"string","order":5,"title":"total_claim_amount","allowSearch":false,"alignContent":"left","allowHTML":false,"highlightLinks":false,"useMonospaceFont":false,"preserveWhitespace":false},{"booleanValues":["false","true"],"imageUrlTemplate":"{{ @ }}","imageTitleTemplate":"{{ @ }}","imageWidth":"","imageHeight":"","linkUrlTemplate":"{{ @ }}","linkTextTemplate":"{{ @ }}","linkTitleTemplate":"{{ @ }}","linkOpenInNewTab":true,"name":"primary_diag_code","type":"string","displayAs":"string","order":6,"title":"primary_diag_code","allowSearch":false,"alignContent":"left","allowHTML":false,"highlightLinks":false,"useMonospaceFont":false,"preserveWhitespace":false}],"allowHTMLByDefault":false,"itemsPerPage":25,"paginationSize":"default","condensed":true,"withRowNumber":false}},"position":{"x":0,"y":2,"width":4,"height":7}},{"widget":{"name":"f3eb0819","queries":[{"name":"main_query","query":{"datasetName":"cfe4a820","fields":[{"name":"claim_type","expression":"`claim_type`"},{"name":"count(*)","expression":"COUNT(`*`)"}],"disaggregated":false}}],"spec":{"version":3,"widgetType":"bar","encodings":{"x":{"fieldName":"claim_type","scale":{"type":"categorical"},"displayName":"claim_type"},"y":{"fieldName":"count(*)","scale":{"type":"quantitative"},"displayName":"Count of Records"}},"mark":{"colors":["#AB4057","#FFAB00","#00A972","#FF3621","#8BCAE7","#AB4057","#99DDB4","#FCA4A1","#919191","#BF7080"]}}},"position":{"x":4,"y":3,"width":2,"height":6}},{"widget":{"name":"a8036554","queries":[{"name":"main_query","query":{"datasetName":"cfe4a820","fields":[{"name":"avg(total_claim_amount)","expression":"AVG(`total_claim_amount`)"},{"name":"claim_type","expression":"`claim_type`"},{"name":"primary_product_or_service","expression":"`primary_product_or_service`"}],"disaggregated":false}}],"spec":{"version":3,"widgetType":"heatmap","encodings":{"x":{"fieldName":"claim_type","scale":{"type":"categorical"},"displayName":"claim_type"},"y":{"fieldName":"primary_product_or_service","scale":{"type":"categorical"},"displayName":"primary_product_or_service"},"color":{"fieldName":"avg(total_claim_amount)","scale":{"type":"quantitative","colorRamp":{"mode":"scheme","scheme":"reds"}},"displayName":"Average total_claim_amount"}}}},"position":{"x":0,"y":9,"width":6,"height":15}},{"widget":{"name":"1d89b670","queries":[{"name":"main_query","query":{"datasetName":"1de925ce","disaggregated":false}}],"spec":{"version":3,"widgetType":"bar","encodings":{}}},"position":{"x":0,"y":24,"width":3,"height":6}}],"pageType":"PAGE_TYPE_CANVAS"}]}
+{
+  "datasets" : [ {
+    "name" : "9d66c737",
+    "displayName" : "appointment",
+    "query" : "SELECT * FROM redox.hls_webinar_fy25q4.appointment"
+  }, {
+    "name" : "e373ecec",
+    "displayName" : "documentreference",
+    "query" : "SELECT * FROM redox.hls_webinar_fy25q4.documentreference"
+  }, {
+    "name" : "39a53b0b",
+    "displayName" : "encounter",
+    "query" : "SELECT * FROM redox.hls_webinar_fy25q4.encounter"
+  }, {
+    "name" : "96e00b52",
+    "displayName" : "location",
+    "query" : "SELECT * FROM redox.hls_webinar_fy25q4.location"
+  }, {
+    "name" : "ba5eebad",
+    "displayName" : "medicationrequest",
+    "query" : "SELECT * FROM redox.hls_webinar_fy25q4.medicationrequest"
+  }, {
+    "name" : "f2ebebb5",
+    "displayName" : "messageheader",
+    "query" : "SELECT * FROM redox.hls_webinar_fy25q4.messageheader"
+  }, {
+    "name" : "4b8f87de",
+    "displayName" : "meta",
+    "query" : "SELECT * FROM redox.hls_webinar_fy25q4.meta"
+  }, {
+    "name" : "0df56fb5",
+    "displayName" : "observation",
+    "query" : "SELECT * FROM redox.hls_webinar_fy25q4.observation"
+  }, {
+    "name" : "d1f135cb",
+    "displayName" : "organization",
+    "query" : "SELECT * FROM redox.hls_webinar_fy25q4.organization"
+  }, {
+    "name" : "3a47b3b5",
+    "displayName" : "patient",
+    "query" : "SELECT * FROM redox.hls_webinar_fy25q4.patient"
+  }, {
+    "name" : "71cf3f67",
+    "displayName" : "practitioner",
+    "query" : "SELECT * FROM redox.hls_webinar_fy25q4.practitioner"
+  }, {
+    "name" : "a4c0ae75",
+    "displayName" : "servicerequest",
+    "query" : "SELECT * FROM redox.hls_webinar_fy25q4.servicerequest"
+  }, {
+    "name" : "fa1f765d",
+    "displayName" : "Bundle Meta - DataModel Summary",
+    "query" : "select\n  DataModel::string as DataModel\n  ,EventType::string as EventType\n  ,count(*) as cnt\nfrom \n  redox.hls_webinar_fy25q4.meta\ngroup by \n  DataModel::string\n  ,EventType::string\norder by \n  cnt desc"
+  }, {
+    "name" : "f2d9ce00",
+    "displayName" : "Healthcare Patient Demographics Dataset",
+    "query" : "select distinct\n  Case when id::string is not null then id::string else Patient_url end as patient_id,\n  birthdate::date as birthdate,\n  floor(datediff(current_date(), birthdate::date) / 365.25) as age,\n  gender::string as gender,\n  address:[0].city::string as city,\n  address:[0].state::string as state,\n  address:[0].postalCode::string as postalCode,\n  address:[0].extension[0].extension[0].valueDecimal::double as latitude,\n  address:[0].extension[0].extension[1].valueDecimal::double as longitude,\n  communication:[0].language.text::string as primary_language,\n  extension:[0].extension[0].valueCoding.display::string as race\nfrom redox.hls_webinar_fy25q4.patient"
+  }, {
+    "name" : "db0a6137",
+    "displayName" : "fhir_bronze_variant",
+    "query" : "SELECT * FROM redox.hls_webinar_fy25q4.fhir_bronze_variant"
+  }, {
+    "name" : "cec3636e",
+    "displayName" : "Claim Details",
+    "query" : "with claim_fixed as (\n  select distinct\n    bundle_uuid\n    ,id::string as claim_id\n    ,use::string as use\n    ,array(\n      diagnosis:[0].diagnosisCodeableConcept.coding[0].code::string\n      ,diagnosis:[1].diagnosisCodeableConcept.coding[0].code::string\n      ,diagnosis:[2].diagnosisCodeableConcept.coding[0].code::string\n    ) as diag_codes\n    ,diagnosis:[0].diagnosisCodeableConcept.coding[0].code::string as primary_diag_code\n    ,priority:coding[0].code::string as priority\n    ,type:coding[0].code::string as claim_type\n  from \n    redox.hls_webinar_fy25q4.claim\n  where\n    bundle_uuid = :bundle_uuid\n)\nselect \n  *\n  ,ai_query(\n    endpoint => 'databricks-meta-llama-3-3-70b-instruct'\n    ,request => \"Lookup the ICD10 CM code descriptions for ('\" \n      || array_join(diag_codes, \"', '\" ) \n      || \"'). Then summarize the claims diagnosis findings in less than 250 characters.'\"\n    ,returnType => 'STRING'\n  ) AS diagnosis_code_summary\nfrom claim_fixed",
+    "parameters" : [ {
+      "displayName" : "bundle_uuid",
+      "keyword" : "bundle_uuid",
+      "dataType" : "STRING",
+      "defaultSelection" : {
+        "values" : {
+          "dataType" : "STRING",
+          "values" : [ {
+            "value" : "a710df7d-92b8-4e3e-99ca-b5df37808bc9"
+          } ]
+        }
+      }
+    } ]
+  }, {
+    "name" : "f2788355",
+    "displayName" : "claim",
+    "query" : "SELECT * FROM redox.hls_webinar_fy25q4.claim"
+  }, {
+    "name" : "1de925ce",
+    "displayName" : "Encounter Data Extraction for Analysis",
+    "query" : "select \n    case when id::string is not null then id::string else encounter_url end as encounter_id\n    ,type:[0].text::string as primary_encounter_type\n    ,class:code::string as encounter_class\n    ,split(appointment:[0].reference::string, \"/\")[1] as appointment_id\n    ,reasonCode:[0].coding[0].display::string as primary_reason\n    ,location:[0].location.display::string as primary_location\n    ,period:start::timestamp as encounter_start\n    ,period:end::timestamp as encounter_end\n    ,status::string as encounter_status\n    ,datediff(MINUTE, period:start::timestamp, period:end::timestamp) as duration_minutes\nfrom redox.hls_webinar_fy25q4.encounter"
+  }, {
+    "name" : "947e2cb7",
+    "displayName" : "Claim Use",
+    "query" : "select distinct \n  bundle_uuid\n  ,id::string as claim_id\n  ,use::string as use\nfrom \n  redox.hls_webinar_fy25q4.claim"
+  }, {
+    "name" : "7052e0ec",
+    "displayName" : "Claim Use Distinct Values",
+    "query" : "select distinct use::string as claim_use from redox.hls_webinar_fy25q4.claim;"
+  }, {
+    "name" : "cfe4a820",
+    "displayName" : "Claim Fixed",
+    "query" : "select distinct\n  bundle_uuid\n  ,id::string as claim_id\n  ,use::string as use\n  ,total:value::double as total_claim_amount\n  ,item:[0].productOrService.text::string as primary_product_or_service\n  ,array(\n    diagnosis:[0].diagnosisCodeableConcept.coding[0].code::string\n    ,diagnosis:[1].diagnosisCodeableConcept.coding[0].code::string\n    ,diagnosis:[2].diagnosisCodeableConcept.coding[0].code::string\n  ) as diag_codes\n  ,diagnosis:[0].diagnosisCodeableConcept.coding[0].code::string as primary_diag_code\n  ,priority:coding[0].code::string as priority\n  ,type:coding[0].code::string as claim_type\nfrom \n  redox.hls_webinar_fy25q4.claim\nwhere\n  array_contains(:use, use::string)",
+    "parameters" : [ {
+      "displayName" : "use",
+      "keyword" : "use",
+      "dataType" : "STRING",
+      "complexType" : "MULTI",
+      "defaultSelection" : {
+        "values" : {
+          "dataType" : "STRING",
+          "values" : [ {
+            "value" : "claim"
+          }, {
+            "value" : "preauthorization"
+          } ]
+        }
+      }
+    } ]
+  } ],
+  "pages" : [ {
+    "name" : "1ef43ca5",
+    "displayName" : "Bundle Meta",
+    "layout" : [ {
+      "widget" : {
+        "name" : "1ca0d811",
+        "textbox_spec" : "##  Databricks Health & Life Science HIMSS25\n# Redox Direct Integration Streaming FHIR Ingestion \n### Bundle & ETL Pipeline Meta Data"
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 0,
+        "width" : 4,
+        "height" : 2
+      }
+    }, {
+      "widget" : {
+        "name" : "20a1b88d",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "db0a6137",
+            "fields" : [ {
+              "name" : "count(*)",
+              "expression" : "COUNT(`*`)"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 2,
+          "widgetType" : "counter",
+          "encodings" : {
+            "value" : {
+              "fieldName" : "count(*)",
+              "format" : {
+                "type" : "number-plain",
+                "abbreviation" : "compact",
+                "decimalPlaces" : {
+                  "type" : "max",
+                  "places" : 2
+                }
+              },
+              "style" : {
+                "fontSize" : 48,
+                "color" : "#FFAB00",
+                "rules" : [ {
+                  "condition" : {
+                    "operator" : ">="
+                  },
+                  "color" : "#00A972"
+                } ]
+              },
+              "displayName" : "Count of Records"
+            }
+          },
+          "frame" : {
+            "showTitle" : true,
+            "showDescription" : false,
+            "title" : "Total FHIR Bundles Ingested from Redox",
+            "description" : "Count of bundle_uuid",
+            "headerAlignment" : "center"
+          }
+        }
+      },
+      "position" : {
+        "x" : 4,
+        "y" : 0,
+        "width" : 2,
+        "height" : 2
+      }
+    }, {
+      "widget" : {
+        "name" : "320c09be",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "4b8f87de",
+            "fields" : [ {
+              "name" : "count(*)",
+              "expression" : "COUNT(`*`)"
+            }, {
+              "name" : "EventType",
+              "expression" : "`EventType`"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 3,
+          "widgetType" : "bar",
+          "encodings" : {
+            "x" : {
+              "fieldName" : "count(*)",
+              "scale" : {
+                "type" : "quantitative"
+              },
+              "displayName" : "Count of Records"
+            },
+            "y" : {
+              "fieldName" : "EventType",
+              "scale" : {
+                "type" : "categorical"
+              },
+              "displayName" : "EventType"
+            }
+          },
+          "frame" : {
+            "showTitle" : true,
+            "showDescription" : false,
+            "title" : "Distribution of Event Types ",
+            "description" : "",
+            "headerAlignment" : "center"
+          }
+        }
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 2,
+        "width" : 2,
+        "height" : 10
+      }
+    }, {
+      "widget" : {
+        "name" : "bdb28564",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "db0a6137",
+            "fields" : [ {
+              "name" : "hourly(ingest_time)",
+              "expression" : "DATE_TRUNC(\"HOUR\", `ingest_time`)"
+            }, {
+              "name" : "countdistinct(bundle_uuid)",
+              "expression" : "COUNT(DISTINCT `bundle_uuid`)"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 1,
+          "widgetType" : "combo",
+          "encodings" : {
+            "x" : {
+              "fieldName" : "hourly(ingest_time)",
+              "scale" : {
+                "type" : "temporal"
+              },
+              "displayName" : "ingest_time"
+            },
+            "y" : {
+              "primary" : {
+                "fields" : [ {
+                  "fieldName" : "countdistinct(bundle_uuid)",
+                  "displayName" : "Count of Unique bundle_uuid"
+                } ]
+              },
+              "secondary" : {
+                "fields" : [ {
+                  "fieldName" : "countdistinct(bundle_uuid)",
+                  "displayName" : "Count of Unique bundle_uuid"
+                } ]
+              },
+              "scale" : {
+                "type" : "quantitative"
+              }
+            },
+            "color" : {
+              "legend" : {
+                "position" : "bottom",
+                "hideTitle" : true,
+                "hide" : true
+              }
+            }
+          },
+          "mark" : {
+            "colors" : [ "#FF3621", "#FFAB00", "#00A972", "#FF3621", "#8BCAE7", "#AB4057", "#99DDB4", "#FCA4A1", "#919191", "#BF7080" ]
+          },
+          "frame" : {
+            "title" : "Ingest Time Trends",
+            "showTitle" : true,
+            "headerAlignment" : "center"
+          }
+        }
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 12,
+        "width" : 6,
+        "height" : 6
+      }
+    }, {
+      "widget" : {
+        "name" : "0c3a2b37",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "fa1f765d",
+            "fields" : [ {
+              "name" : "sum(cnt)",
+              "expression" : "SUM(`cnt`)"
+            }, {
+              "name" : "DataModel",
+              "expression" : "`DataModel`"
+            }, {
+              "name" : "EventType",
+              "expression" : "`EventType`"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 3,
+          "widgetType" : "heatmap",
+          "encodings" : {
+            "x" : {
+              "fieldName" : "DataModel",
+              "scale" : {
+                "type" : "categorical"
+              },
+              "axis" : {
+                "labelAngle" : 45
+              },
+              "displayName" : "DataModel"
+            },
+            "y" : {
+              "fieldName" : "EventType",
+              "scale" : {
+                "type" : "categorical"
+              },
+              "axis" : {
+                "labelAngle" : 90
+              },
+              "displayName" : "EventType"
+            },
+            "color" : {
+              "fieldName" : "sum(cnt)",
+              "scale" : {
+                "type" : "quantitative",
+                "colorRamp" : {
+                  "mode" : "scheme",
+                  "scheme" : "greens"
+                }
+              },
+              "displayName" : "Sum of cnt"
+            },
+            "label" : {
+              "show" : false
+            }
+          },
+          "frame" : {
+            "showTitle" : true,
+            "title" : "Distribution of EventType by DataModel",
+            "headerAlignment" : "center"
+          }
+        }
+      },
+      "position" : {
+        "x" : 2,
+        "y" : 2,
+        "width" : 4,
+        "height" : 10
+      }
+    } ],
+    "pageType" : "PAGE_TYPE_CANVAS"
+  }, {
+    "name" : "5d6c2cf5",
+    "displayName" : "Patient Details",
+    "layout" : [ {
+      "widget" : {
+        "name" : "2f42d146",
+        "textbox_spec" : "##  Databricks Health & Life Science FY25 Q4 Webinar\n# Redox Direct Integration Streaming FHIR Ingestion \n### Patient Details"
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 0,
+        "width" : 4,
+        "height" : 2
+      }
+    }, {
+      "widget" : {
+        "name" : "e5948c1a",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "f2d9ce00",
+            "fields" : [ {
+              "name" : "countdistinct(patient_id)",
+              "expression" : "COUNT(DISTINCT `patient_id`)"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 2,
+          "widgetType" : "counter",
+          "encodings" : {
+            "value" : {
+              "fieldName" : "countdistinct(patient_id)",
+              "displayName" : "Count of Unique patient_id"
+            }
+          },
+          "frame" : {
+            "showTitle" : true,
+            "title" : "Distinct Patient Count"
+          }
+        }
+      },
+      "position" : {
+        "x" : 4,
+        "y" : 0,
+        "width" : 2,
+        "height" : 2
+      }
+    }, {
+      "widget" : {
+        "name" : "f8c166a6",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "f2d9ce00",
+            "fields" : [ {
+              "name" : "percentile(age, percentage=0_5)",
+              "expression" : "PERCENTILE(`age`, 0.5)"
+            }, {
+              "name" : "latitude",
+              "expression" : "`latitude`"
+            }, {
+              "name" : "longitude",
+              "expression" : "`longitude`"
+            }, {
+              "name" : "patient_id",
+              "expression" : "`patient_id`"
+            }, {
+              "name" : "gender",
+              "expression" : "`gender`"
+            }, {
+              "name" : "age",
+              "expression" : "`age`"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 2,
+          "widgetType" : "symbol-map",
+          "encodings" : {
+            "coordinates" : {
+              "latitude" : {
+                "fieldName" : "latitude",
+                "displayName" : "latitude"
+              },
+              "longitude" : {
+                "fieldName" : "longitude",
+                "displayName" : "longitude"
+              }
+            },
+            "color" : {
+              "fieldName" : "percentile(age, percentage=0_5)",
+              "scale" : {
+                "type" : "quantitative",
+                "colorRamp" : {
+                  "mode" : "scheme",
+                  "scheme" : "sinebow"
+                }
+              },
+              "legend" : {
+                "title" : "Primary Language"
+              },
+              "displayName" : "Primary Language"
+            },
+            "extra" : [ {
+              "fieldName" : "patient_id",
+              "displayName" : "patient_id"
+            }, {
+              "fieldName" : "gender",
+              "displayName" : "gender"
+            }, {
+              "fieldName" : "age",
+              "displayName" : "age"
+            } ]
+          },
+          "frame" : {
+            "showTitle" : true,
+            "title" : "Patient Primary Address"
+          },
+          "mark" : {
+            "opacity" : 1
+          }
+        }
+      },
+      "position" : {
+        "x" : 3,
+        "y" : 2,
+        "width" : 3,
+        "height" : 11
+      }
+    }, {
+      "widget" : {
+        "name" : "55c85920",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "f2d9ce00",
+            "fields" : [ {
+              "name" : "gender",
+              "expression" : "`gender`"
+            }, {
+              "name" : "min(age)",
+              "expression" : "MIN(`age`)"
+            }, {
+              "name" : "q1(age)",
+              "expression" : "PERCENTILE(`age`, 0.25)"
+            }, {
+              "name" : "median(age)",
+              "expression" : "MEDIAN(`age`)"
+            }, {
+              "name" : "q3(age)",
+              "expression" : "PERCENTILE(`age`, 0.75)"
+            }, {
+              "name" : "max(age)",
+              "expression" : "MAX(`age`)"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 3,
+          "widgetType" : "box",
+          "encodings" : {
+            "x" : {
+              "fieldName" : "gender",
+              "scale" : {
+                "type" : "categorical"
+              },
+              "displayName" : "gender"
+            },
+            "y" : {
+              "whiskerStart" : {
+                "fieldName" : "min(age)",
+                "displayName" : "Minimum age"
+              },
+              "boxStart" : {
+                "fieldName" : "q1(age)",
+                "displayName" : "First Quartile of age"
+              },
+              "boxMid" : {
+                "fieldName" : "median(age)",
+                "displayName" : "Median of age"
+              },
+              "boxEnd" : {
+                "fieldName" : "q3(age)",
+                "displayName" : "Third Quartile of age"
+              },
+              "whiskerEnd" : {
+                "fieldName" : "max(age)",
+                "displayName" : "Maximum age"
+              },
+              "axis" : {
+                "title" : "age"
+              },
+              "scale" : {
+                "type" : "quantitative"
+              }
+            }
+          }
+        }
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 2,
+        "width" : 3,
+        "height" : 5
+      }
+    }, {
+      "widget" : {
+        "name" : "b2b1f16d",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "f2d9ce00",
+            "fields" : [ {
+              "name" : "count(*)",
+              "expression" : "COUNT(`*`)"
+            }, {
+              "name" : "primary_language",
+              "expression" : "`primary_language`"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 3,
+          "widgetType" : "pie",
+          "encodings" : {
+            "angle" : {
+              "fieldName" : "count(*)",
+              "scale" : {
+                "type" : "quantitative"
+              },
+              "displayName" : "Count of Records"
+            },
+            "color" : {
+              "fieldName" : "primary_language",
+              "scale" : {
+                "type" : "categorical"
+              },
+              "displayName" : "primary_language"
+            },
+            "label" : {
+              "show" : true
+            }
+          }
+        }
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 7,
+        "width" : 3,
+        "height" : 6
+      }
+    }, {
+      "widget" : {
+        "name" : "1ced5396",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "0df56fb5",
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 3,
+          "widgetType" : "bar",
+          "encodings" : { }
+        }
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 13,
+        "width" : 3,
+        "height" : 6
+      }
+    } ],
+    "pageType" : "PAGE_TYPE_CANVAS"
+  }, {
+    "name" : "39a95afd",
+    "displayName" : "Encounters",
+    "layout" : [ {
+      "widget" : {
+        "name" : "f160c4c2",
+        "textbox_spec" : "##  Databricks Health & Life Science FY25 Q4 Webinar\n# Redox Direct Integration Streaming FHIR Ingestion \n### Encounters"
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 0,
+        "width" : 4,
+        "height" : 2
+      }
+    }, {
+      "widget" : {
+        "name" : "ae71f2c3",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "1de925ce",
+            "fields" : [ {
+              "name" : "count(encounter_id)",
+              "expression" : "COUNT(`encounter_id`)"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 2,
+          "widgetType" : "counter",
+          "encodings" : {
+            "value" : {
+              "fieldName" : "count(encounter_id)",
+              "style" : {
+                "rules" : [ {
+                  "condition" : {
+                    "operator" : "="
+                  },
+                  "color" : "#00A972"
+                } ]
+              },
+              "displayName" : "Count of encounter_id"
+            }
+          },
+          "frame" : {
+            "showTitle" : true,
+            "title" : "Total Encounters"
+          }
+        }
+      },
+      "position" : {
+        "x" : 4,
+        "y" : 0,
+        "width" : 2,
+        "height" : 2
+      }
+    }, {
+      "widget" : {
+        "name" : "28086234",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "1de925ce",
+            "fields" : [ {
+              "name" : "monthly(encounter_start)",
+              "expression" : "DATE_TRUNC(\"MONTH\", `encounter_start`)"
+            }, {
+              "name" : "count(encounter_id)",
+              "expression" : "COUNT(`encounter_id`)"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 3,
+          "widgetType" : "bar",
+          "encodings" : {
+            "x" : {
+              "fieldName" : "monthly(encounter_start)",
+              "scale" : {
+                "type" : "temporal"
+              },
+              "axis" : {
+                "title" : "Encounter Start Month"
+              },
+              "displayName" : "Encounter Start Month"
+            },
+            "y" : {
+              "fieldName" : "count(encounter_id)",
+              "scale" : {
+                "type" : "quantitative"
+              },
+              "axis" : {
+                "title" : "Monthly Encounter Count"
+              },
+              "displayName" : "Monthly Encounter Count"
+            },
+            "label" : {
+              "show" : false
+            }
+          },
+          "mark" : {
+            "colors" : [ "#00A972", "#FFAB00", "#00A972", "#FF3621", "#8BCAE7", "#AB4057", "#99DDB4", "#FCA4A1", "#919191", "#BF7080" ]
+          }
+        }
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 8,
+        "width" : 6,
+        "height" : 6
+      }
+    }, {
+      "widget" : {
+        "name" : "3153e960",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "1de925ce",
+            "fields" : [ {
+              "name" : "encounter_class",
+              "expression" : "`encounter_class`"
+            }, {
+              "name" : "min(duration_minutes)",
+              "expression" : "MIN(`duration_minutes`)"
+            }, {
+              "name" : "q1(duration_minutes)",
+              "expression" : "PERCENTILE(`duration_minutes`, 0.25)"
+            }, {
+              "name" : "median(duration_minutes)",
+              "expression" : "MEDIAN(`duration_minutes`)"
+            }, {
+              "name" : "q3(duration_minutes)",
+              "expression" : "PERCENTILE(`duration_minutes`, 0.75)"
+            }, {
+              "name" : "max(duration_minutes)",
+              "expression" : "MAX(`duration_minutes`)"
+            } ],
+            "filters" : [ {
+              "expression" : "`encounter_class` IN ('AMB', 'EMER', 'HH', 'IMP', 'VR')"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 3,
+          "widgetType" : "box",
+          "encodings" : {
+            "x" : {
+              "fieldName" : "encounter_class",
+              "scale" : {
+                "type" : "categorical"
+              },
+              "axis" : {
+                "title" : "Encounter Class"
+              },
+              "displayName" : "Encounter Class"
+            },
+            "y" : {
+              "whiskerStart" : {
+                "fieldName" : "min(duration_minutes)",
+                "displayName" : "Minimum duration_minutes"
+              },
+              "boxStart" : {
+                "fieldName" : "q1(duration_minutes)",
+                "displayName" : "First Quartile of duration_minutes"
+              },
+              "boxMid" : {
+                "fieldName" : "median(duration_minutes)",
+                "displayName" : "Median of duration_minutes"
+              },
+              "boxEnd" : {
+                "fieldName" : "q3(duration_minutes)",
+                "displayName" : "Third Quartile of duration_minutes"
+              },
+              "whiskerEnd" : {
+                "fieldName" : "max(duration_minutes)",
+                "displayName" : "Maximum duration_minutes"
+              },
+              "axis" : {
+                "title" : "Duration in Minutes"
+              },
+              "scale" : {
+                "type" : "quantitative",
+                "fn" : {
+                  "type" : "symlog"
+                },
+                "reverse" : false
+              }
+            }
+          },
+          "frame" : {
+            "showTitle" : true,
+            "title" : "Distribution of Encounter Duration in Minutes by Class"
+          }
+        }
+      },
+      "position" : {
+        "x" : 3,
+        "y" : 2,
+        "width" : 3,
+        "height" : 6
+      }
+    }, {
+      "widget" : {
+        "name" : "0b6f570c",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "1de925ce",
+            "fields" : [ {
+              "name" : "encounter_status",
+              "expression" : "`encounter_status`"
+            }, {
+              "name" : "count(*)",
+              "expression" : "COUNT(`*`)"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 3,
+          "widgetType" : "area",
+          "encodings" : {
+            "x" : {
+              "fieldName" : "encounter_status",
+              "scale" : {
+                "type" : "categorical"
+              },
+              "displayName" : "encounter_status"
+            },
+            "y" : {
+              "fieldName" : "count(*)",
+              "scale" : {
+                "type" : "quantitative"
+              },
+              "displayName" : "Count of Records"
+            }
+          },
+          "mark" : {
+            "colors" : [ "#AB4057", "#FFAB00", "#00A972", "#FF3621", "#8BCAE7", "#AB4057", "#99DDB4", "#FCA4A1", "#919191", "#BF7080" ]
+          }
+        }
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 2,
+        "width" : 3,
+        "height" : 6
+      }
+    } ],
+    "pageType" : "PAGE_TYPE_CANVAS"
+  }, {
+    "name" : "a7e10919",
+    "displayName" : "Claims",
+    "layout" : [ {
+      "widget" : {
+        "name" : "576e38fd",
+        "textbox_spec" : "##  Databricks Health & Life Science FY25 Q4 Webinar\n# Redox Direct Integration Streaming FHIR Ingestion \n### Claims Analysis"
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 0,
+        "width" : 4,
+        "height" : 2
+      }
+    }, {
+      "widget" : {
+        "name" : "2ae52424",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "f2788355",
+            "fields" : [ {
+              "name" : "count(*)",
+              "expression" : "COUNT(`*`)"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 2,
+          "widgetType" : "counter",
+          "encodings" : {
+            "value" : {
+              "fieldName" : "count(*)",
+              "style" : {
+                "color" : "#FCA4A1"
+              },
+              "displayName" : "Count of Records"
+            }
+          },
+          "frame" : {
+            "showTitle" : true,
+            "title" : "Claim Record Count"
+          }
+        }
+      },
+      "position" : {
+        "x" : 4,
+        "y" : 0,
+        "width" : 2,
+        "height" : 2
+      }
+    }, {
+      "widget" : {
+        "name" : "0002daf0",
+        "queries" : [ {
+          "name" : "dashboards/01efdc0d04131b7d95c93efbe6583969/datasets/01efdc2cfa971a5b9aaa813393aac411_use",
+          "query" : {
+            "datasetName" : "f2788355",
+            "fields" : [ {
+              "name" : "use",
+              "expression" : "`use`"
+            }, {
+              "name" : "use_associativity",
+              "expression" : "COUNT_IF(`associative_filter_predicate_group`)"
+            } ],
+            "disaggregated" : false
+          }
+        }, {
+          "name" : "parameter_dashboards/01efdc0d04131b7d95c93efbe6583969/datasets/01efdc824f641bdf9d521c5f1c3d7322_use",
+          "query" : {
+            "datasetName" : "cfe4a820",
+            "parameters" : [ {
+              "name" : "use",
+              "keyword" : "use"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 2,
+          "widgetType" : "filter-single-select",
+          "encodings" : {
+            "fields" : [ {
+              "fieldName" : "use",
+              "displayName" : "use",
+              "queryName" : "dashboards/01efdc0d04131b7d95c93efbe6583969/datasets/01efdc2cfa971a5b9aaa813393aac411_use"
+            }, {
+              "parameterName" : "use",
+              "queryName" : "parameter_dashboards/01efdc0d04131b7d95c93efbe6583969/datasets/01efdc824f641bdf9d521c5f1c3d7322_use"
+            } ]
+          },
+          "disallowAll" : false,
+          "frame" : {
+            "showTitle" : true,
+            "title" : ""
+          }
+        }
+      },
+      "position" : {
+        "x" : 4,
+        "y" : 2,
+        "width" : 2,
+        "height" : 1
+      }
+    }, {
+      "widget" : {
+        "name" : "8b159c68",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "cfe4a820",
+            "fields" : [ {
+              "name" : "bundle_uuid",
+              "expression" : "`bundle_uuid`"
+            }, {
+              "name" : "use",
+              "expression" : "`use`"
+            }, {
+              "name" : "claim_type",
+              "expression" : "`claim_type`"
+            }, {
+              "name" : "primary_product_or_service",
+              "expression" : "`primary_product_or_service`"
+            } ],
+            "disaggregated" : true
+          }
+        } ],
+        "spec" : {
+          "version" : 1,
+          "widgetType" : "table",
+          "encodings" : {
+            "columns" : [ {
+              "fieldName" : "bundle_uuid",
+              "booleanValues" : [ "false", "true" ],
+              "imageUrlTemplate" : "{{ @ }}",
+              "imageTitleTemplate" : "{{ @ }}",
+              "imageWidth" : "",
+              "imageHeight" : "",
+              "linkUrlTemplate" : "{{ @ }}",
+              "linkTextTemplate" : "{{ @ }}",
+              "linkTitleTemplate" : "{{ @ }}",
+              "linkOpenInNewTab" : true,
+              "type" : "string",
+              "displayAs" : "string",
+              "visible" : true,
+              "order" : 0,
+              "title" : "bundle_uuid",
+              "allowSearch" : false,
+              "alignContent" : "left",
+              "allowHTML" : false,
+              "highlightLinks" : false,
+              "useMonospaceFont" : false,
+              "preserveWhitespace" : false,
+              "displayName" : "bundle_uuid"
+            }, {
+              "fieldName" : "use",
+              "booleanValues" : [ "false", "true" ],
+              "imageUrlTemplate" : "{{ @ }}",
+              "imageTitleTemplate" : "{{ @ }}",
+              "imageWidth" : "",
+              "imageHeight" : "",
+              "linkUrlTemplate" : "{{ @ }}",
+              "linkTextTemplate" : "{{ @ }}",
+              "linkTitleTemplate" : "{{ @ }}",
+              "linkOpenInNewTab" : true,
+              "type" : "string",
+              "displayAs" : "string",
+              "visible" : true,
+              "order" : 1,
+              "title" : "Use",
+              "allowSearch" : false,
+              "alignContent" : "left",
+              "allowHTML" : false,
+              "highlightLinks" : false,
+              "useMonospaceFont" : false,
+              "preserveWhitespace" : false,
+              "description" : "Use",
+              "displayName" : "use"
+            }, {
+              "fieldName" : "claim_type",
+              "booleanValues" : [ "false", "true" ],
+              "imageUrlTemplate" : "{{ @ }}",
+              "imageTitleTemplate" : "{{ @ }}",
+              "imageWidth" : "",
+              "imageHeight" : "",
+              "linkUrlTemplate" : "{{ @ }}",
+              "linkTextTemplate" : "{{ @ }}",
+              "linkTitleTemplate" : "{{ @ }}",
+              "linkOpenInNewTab" : true,
+              "type" : "string",
+              "displayAs" : "string",
+              "visible" : true,
+              "order" : 7,
+              "title" : "Claim Type",
+              "allowSearch" : false,
+              "alignContent" : "left",
+              "allowHTML" : false,
+              "highlightLinks" : false,
+              "useMonospaceFont" : false,
+              "preserveWhitespace" : false,
+              "description" : "Claim Type",
+              "displayName" : "claim_type"
+            }, {
+              "fieldName" : "primary_product_or_service",
+              "booleanValues" : [ "false", "true" ],
+              "imageUrlTemplate" : "{{ @ }}",
+              "imageTitleTemplate" : "{{ @ }}",
+              "imageWidth" : "",
+              "imageHeight" : "",
+              "linkUrlTemplate" : "{{ @ }}",
+              "linkTextTemplate" : "{{ @ }}",
+              "linkTitleTemplate" : "{{ @ }}",
+              "linkOpenInNewTab" : true,
+              "type" : "string",
+              "displayAs" : "string",
+              "visible" : true,
+              "order" : 8,
+              "title" : "Primary Product or Service",
+              "allowSearch" : false,
+              "alignContent" : "left",
+              "allowHTML" : false,
+              "highlightLinks" : false,
+              "useMonospaceFont" : false,
+              "preserveWhitespace" : false,
+              "description" : "Primary Product or Service",
+              "displayName" : "primary_product_or_service"
+            } ]
+          },
+          "invisibleColumns" : [ {
+            "booleanValues" : [ "false", "true" ],
+            "imageUrlTemplate" : "{{ @ }}",
+            "imageTitleTemplate" : "{{ @ }}",
+            "imageWidth" : "",
+            "imageHeight" : "",
+            "linkUrlTemplate" : "{{ @ }}",
+            "linkTextTemplate" : "{{ @ }}",
+            "linkTitleTemplate" : "{{ @ }}",
+            "linkOpenInNewTab" : true,
+            "name" : "priority",
+            "type" : "string",
+            "displayAs" : "string",
+            "order" : 2,
+            "title" : "priority",
+            "allowSearch" : false,
+            "alignContent" : "left",
+            "allowHTML" : false,
+            "highlightLinks" : false,
+            "useMonospaceFont" : false,
+            "preserveWhitespace" : false
+          }, {
+            "booleanValues" : [ "false", "true" ],
+            "imageUrlTemplate" : "{{ @ }}",
+            "imageTitleTemplate" : "{{ @ }}",
+            "imageWidth" : "",
+            "imageHeight" : "",
+            "linkUrlTemplate" : "{{ @ }}",
+            "linkTextTemplate" : "{{ @ }}",
+            "linkTitleTemplate" : "{{ @ }}",
+            "linkOpenInNewTab" : true,
+            "name" : "claim_id",
+            "type" : "string",
+            "displayAs" : "string",
+            "order" : 3,
+            "title" : "claim_id",
+            "allowSearch" : false,
+            "alignContent" : "left",
+            "allowHTML" : false,
+            "highlightLinks" : false,
+            "useMonospaceFont" : false,
+            "preserveWhitespace" : false
+          }, {
+            "booleanValues" : [ "false", "true" ],
+            "imageUrlTemplate" : "{{ @ }}",
+            "imageTitleTemplate" : "{{ @ }}",
+            "imageWidth" : "",
+            "imageHeight" : "",
+            "linkUrlTemplate" : "{{ @ }}",
+            "linkTextTemplate" : "{{ @ }}",
+            "linkTitleTemplate" : "{{ @ }}",
+            "linkOpenInNewTab" : true,
+            "name" : "diag_codes",
+            "type" : "complex",
+            "displayAs" : "json",
+            "order" : 4,
+            "title" : "diag_codes",
+            "allowSearch" : false,
+            "alignContent" : "left",
+            "allowHTML" : false,
+            "highlightLinks" : false,
+            "useMonospaceFont" : false,
+            "preserveWhitespace" : false
+          }, {
+            "numberFormat" : "0.00",
+            "booleanValues" : [ "false", "true" ],
+            "imageUrlTemplate" : "{{ @ }}",
+            "imageTitleTemplate" : "{{ @ }}",
+            "imageWidth" : "",
+            "imageHeight" : "",
+            "linkUrlTemplate" : "{{ @ }}",
+            "linkTextTemplate" : "{{ @ }}",
+            "linkTitleTemplate" : "{{ @ }}",
+            "linkOpenInNewTab" : true,
+            "name" : "total_claim_amount",
+            "type" : "float",
+            "displayAs" : "string",
+            "order" : 5,
+            "title" : "total_claim_amount",
+            "allowSearch" : false,
+            "alignContent" : "left",
+            "allowHTML" : false,
+            "highlightLinks" : false,
+            "useMonospaceFont" : false,
+            "preserveWhitespace" : false
+          }, {
+            "booleanValues" : [ "false", "true" ],
+            "imageUrlTemplate" : "{{ @ }}",
+            "imageTitleTemplate" : "{{ @ }}",
+            "imageWidth" : "",
+            "imageHeight" : "",
+            "linkUrlTemplate" : "{{ @ }}",
+            "linkTextTemplate" : "{{ @ }}",
+            "linkTitleTemplate" : "{{ @ }}",
+            "linkOpenInNewTab" : true,
+            "name" : "primary_diag_code",
+            "type" : "string",
+            "displayAs" : "string",
+            "order" : 6,
+            "title" : "primary_diag_code",
+            "allowSearch" : false,
+            "alignContent" : "left",
+            "allowHTML" : false,
+            "highlightLinks" : false,
+            "useMonospaceFont" : false,
+            "preserveWhitespace" : false
+          } ],
+          "allowHTMLByDefault" : false,
+          "itemsPerPage" : 25,
+          "paginationSize" : "default",
+          "condensed" : true,
+          "withRowNumber" : false
+        }
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 2,
+        "width" : 4,
+        "height" : 7
+      }
+    }, {
+      "widget" : {
+        "name" : "f3eb0819",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "cfe4a820",
+            "fields" : [ {
+              "name" : "claim_type",
+              "expression" : "`claim_type`"
+            }, {
+              "name" : "count(*)",
+              "expression" : "COUNT(`*`)"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 3,
+          "widgetType" : "bar",
+          "encodings" : {
+            "x" : {
+              "fieldName" : "claim_type",
+              "scale" : {
+                "type" : "categorical"
+              },
+              "displayName" : "claim_type"
+            },
+            "y" : {
+              "fieldName" : "count(*)",
+              "scale" : {
+                "type" : "quantitative"
+              },
+              "displayName" : "Count of Records"
+            }
+          },
+          "mark" : {
+            "colors" : [ "#AB4057", "#FFAB00", "#00A972", "#FF3621", "#8BCAE7", "#AB4057", "#99DDB4", "#FCA4A1", "#919191", "#BF7080" ]
+          }
+        }
+      },
+      "position" : {
+        "x" : 4,
+        "y" : 3,
+        "width" : 2,
+        "height" : 6
+      }
+    }, {
+      "widget" : {
+        "name" : "a8036554",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "cfe4a820",
+            "fields" : [ {
+              "name" : "avg(total_claim_amount)",
+              "expression" : "AVG(`total_claim_amount`)"
+            }, {
+              "name" : "claim_type",
+              "expression" : "`claim_type`"
+            }, {
+              "name" : "primary_product_or_service",
+              "expression" : "`primary_product_or_service`"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 3,
+          "widgetType" : "heatmap",
+          "encodings" : {
+            "x" : {
+              "fieldName" : "claim_type",
+              "scale" : {
+                "type" : "categorical"
+              },
+              "displayName" : "claim_type"
+            },
+            "y" : {
+              "fieldName" : "primary_product_or_service",
+              "scale" : {
+                "type" : "categorical"
+              },
+              "displayName" : "primary_product_or_service"
+            },
+            "color" : {
+              "fieldName" : "avg(total_claim_amount)",
+              "scale" : {
+                "type" : "quantitative",
+                "colorRamp" : {
+                  "mode" : "scheme",
+                  "scheme" : "reds"
+                }
+              },
+              "displayName" : "Average total_claim_amount"
+            }
+          }
+        }
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 9,
+        "width" : 6,
+        "height" : 15
+      }
+    }, {
+      "widget" : {
+        "name" : "1d89b670",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "1de925ce",
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 3,
+          "widgetType" : "bar",
+          "encodings" : { }
+        }
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 24,
+        "width" : 3,
+        "height" : 6
+      }
+    } ],
+    "pageType" : "PAGE_TYPE_CANVAS"
+  } ],
+  "uiSettings" : {
+    "theme" : { }
+  }
+}
