@@ -17,6 +17,9 @@ for file_type in file_types:
         ,schema = spark.conf.get("schema_use")
         ,volume = spark.conf.get("volume_use")
         ,volume_sub_path = spark.conf.get("volume_sub_path_use")
-        ,file_type = file_type)
+        ,file_type = file_type
+        ,cleanSource_moveDestination = spark.conf.get("cleanSource_moveDestination")
+        ,cleanSource_deleteDestination = spark.conf.get("cleanSource_deleteDestination")
+    )
     
     BronzePipeline.stream_ingest()
