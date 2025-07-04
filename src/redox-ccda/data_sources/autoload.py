@@ -20,10 +20,10 @@ for definition in definitions:
         ,schema = spark.conf.get("schema_use")
         ,volume = spark.conf.get("volume_use")
         ,volume_sub_path = spark.conf.get("volume_sub_path_use")
-        ,redox_extraction_volume = spark.conf.get("redox_extraction_volume")
-        ,file_type = definition.file_type
-        ,cleanSource = definition.cleanSource
-        ,cleanSource_retentionDuration = definition.cleanSource_retentionDuration
+        ,redox_extract_volume = spark.conf.get("redox_extract_volume")
+        ,file_type = definition["file_type"]
+        ,cleanSource = definition["cleanSource"]
+        ,cleanSource_retentionDuration = definition["cleanSource_retentionDuration"]
     )
     
     BronzePipeline.stream_ingest()

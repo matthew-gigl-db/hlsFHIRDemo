@@ -2,7 +2,7 @@ import dlt
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, row_number, lit, concat
 from pyspark.sql.window import Window
-from utilities import copy_file_udf
+from utilities.utils import copy_file_udf
 
 class Bronze:
     def __init__(self, spark: SparkSession, catalog: str, schema: str, volume: str, volume_sub_path: str, file_type: str, redox_extract_volume: str, cleanSource_retentionDuration: str, cleanSource: str = "OFF"):
@@ -53,6 +53,8 @@ class Bronze:
       else:
         volume_path = f"/Volumes/{self.catalog}/{self.schema}/{self.volume}/{self.volume_sub_path}/{self.file_type}"
 
+      extract_path = f"/Volumes/{self.catalog}/{self.schema}/{self.redox_extract_volume}/{self.file_type}"
+
       @dlt.table(
         name=f"{self.catalog}.{self.schema}.{self.file_type}_bronze",
         comment=f"Streaming bronze ingestion of {self.file_type} files from {volume_path}",
@@ -81,9 +83,9 @@ class Bronze:
             .load(volume_path)
             .selectExpr("_metadata as file_metadata", "*")
             .withColumn("source_path", col("file_metadata.file_path"))
-            .withColumn("extraction_path",  concat(lit(self.redox_extract_volume), col("file_metadata.file_name")))
+            .withColumn("extraction_path",  concat(lit(extract_path), col("file_metadata.file_name")))
             .withColumn("sent_to_redox", copy_file_udf(col("source_path"), col("extraction_path")))
-            # .drop("source_path", "extraction_path")
+            .drop("source_path", "extraction_path")
           )
 
     def to_dict(self):
