@@ -5,16 +5,6 @@ from pyspark.sql.window import Window
 from pyspark.sql.functions import udf
 from pyspark.sql.types import StringType, MapType
 
-def copy_file(src_path, dest_path):
-    try:
-        with open(src_path, 'rb') as src_file, open(dest_path, 'wb') as dest_file:
-            dest_file.write(src_file.read())
-        return {"status": "success"}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
-copy_file_udf = udf(copy_file, MapType(StringType(), StringType()))
-
 class Bronze:
     def __init__(self, spark: SparkSession, catalog: str, schema: str, volume: str, volume_sub_path: str, file_type: str, redox_extract_volume: str, cleanSource_retentionDuration: str, cleanSource: str = "OFF"):
         self.spark = spark
@@ -45,6 +35,19 @@ class Bronze:
 
     def __repr__(self):
         return f"Bronze(catalog='{self.catalog}', schema='{self.schema}', volume='{self.volume}',volume_sub_path='{self.volume_sub_path}', file_type='{self.file_type}')"
+
+    @staticmethod
+    @udf(MapType(StringType(), StringType()))
+    def copy_file(src_path, dest_path):
+      try:
+        with open(src_path, 'rb') as src_file, open(dest_path, 'wb') as dest_file:
+          dest_file.write(src_file.read())
+        return {"status": "success"}
+      except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+    # def copy_file_udf(self, src_path, dest_path):
+    #   udf(self.copy_file, MapType(StringType(), StringType()))
       
     def stream_ingest(self):
       schema_definition = f"""
@@ -95,7 +98,7 @@ class Bronze:
             .selectExpr("_metadata as file_metadata", "*")
             .withColumn("source_path", col("file_metadata.file_path"))
             .withColumn("extraction_path",  concat(lit(extract_path), col("file_metadata.file_name")))
-            .withColumn("sent_to_redox", copy_file_udf(col("source_path"), col("extraction_path")))
+            .withColumn("sent_to_redox", self.copy_file(col("source_path"), col("extraction_path")))
             .drop("source_path", "extraction_path")
           )
 
