@@ -2,17 +2,19 @@ import dlt
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, row_number
 from pyspark.sql.window import Window
+import utils
 
 class Bronze:
-    def __init__(self, spark: SparkSession, catalog: str, schema: str, volume: str, volume_sub_path: str, file_type: str, cleanSource_moveDestination: str, cleanSource_retentionDuration: str):
+    def __init__(self, spark: SparkSession, catalog: str, schema: str, volume: str, volume_sub_path: str, file_type: str, redox_extract_volume: str, cleanSource_retentionDuration: str, cleanSource: str = "OFF"):
         self.spark = spark
         self.catalog = catalog
         self.schema = schema
         self.volume = volume
         self.volume_sub_path = volume_sub_path
         self.file_type = file_type
-        self.cleanSource_moveDestination = cleanSource_moveDestination
+        self.redox_extract_volume = redox_extract_volume
         self.cleanSource_retentionDuration = cleanSource_retentionDuration
+        self.cleanSource = cleanSource
     """
     The Bronze class represents a data structure for managing metadata related to a specific data resource.
     
@@ -31,7 +33,7 @@ class Bronze:
     """
 
     def __repr__(self):
-        return f"Bronze(catalog='{self.catalog}', schema='{self.schema}', volume='{self.volume}',volume_sub_path='{self.volume_sub_path}', resource_type='{self.file_type}')"
+        return f"Bronze(catalog='{self.catalog}', schema='{self.schema}', volume='{self.volume}',volume_sub_path='{self.volume_sub_path}', file_type='{self.file_type}')"
       
     def stream_ingest(self):
       schema_definition = f"""
@@ -43,6 +45,7 @@ class Bronze:
         file_modification_time: TIMESTAMP > NOT NULL COMMENT 'Metadata about the file ingested.'
         ,ingest_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP() COMMENT 'The date timestamp the file was ingested.'
         ,value STRING COMMENT 'The raw {self.file_type} file contents.'
+        ,sent_to_redox MAP<STRING, STRING> COMMENT 'Status of the file being sent to Redox, with an error message on failure.'
       """
 
       if self.volume_sub_path == None:
@@ -73,11 +76,14 @@ class Bronze:
             .format("cloudFiles")
             .option("cloudFiles.format", "text")
             .option("wholeText", "true")
-            # .option("cloudFiles.cleanSource", "MOVE")
-            # .option("cloudFiles.cleanSource.moveDestination", self.cleanSource_moveDestination)
-            # .option("cloudFiles.cleanSource.retentionDuration", self.cleanSource_retentionDuration)
+            .option("cloudFiles.cleanSource", self.cleanSource)
+            .option("cloudFiles.cleanSource.retentionDuration", self.cleanSource_retentionDuration)
             .load(volume_path)
             .selectExpr("_metadata as file_metadata", "*")
+            .withColumn("source_path", col("file_metadata.file_path"))
+            .withColumn("extraction_path",  concat(lit(self.redox_extract_volume), col("file_metadata.file_name")))
+            .withColumn("sent_to_redox", copy_file_udf(col("source_path"), col("extraction_path")))
+            # .drop("source_path", "extraction_path")
           )
 
     def to_dict(self):
