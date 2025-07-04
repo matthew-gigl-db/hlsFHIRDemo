@@ -1,8 +1,8 @@
 import dlt
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, row_number
+from pyspark.sql.functions import col, row_number, lit, concat
 from pyspark.sql.window import Window
-import utils
+from utilities import copy_file_udf
 
 class Bronze:
     def __init__(self, spark: SparkSession, catalog: str, schema: str, volume: str, volume_sub_path: str, file_type: str, redox_extract_volume: str, cleanSource_retentionDuration: str, cleanSource: str = "OFF"):
