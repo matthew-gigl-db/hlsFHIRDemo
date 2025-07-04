@@ -2,7 +2,18 @@ import dlt
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, row_number, lit, concat
 from pyspark.sql.window import Window
-from utilities.utils import copy_file_udf
+from pyspark.sql.functions import udf
+from pyspark.sql.types import StringType, MapType
+
+def copy_file(src_path, dest_path):
+    try:
+        with open(src_path, 'rb') as src_file, open(dest_path, 'wb') as dest_file:
+            dest_file.write(src_file.read())
+        return {"status": "success"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+copy_file_udf = udf(copy_file, MapType(StringType(), StringType()))
 
 class Bronze:
     def __init__(self, spark: SparkSession, catalog: str, schema: str, volume: str, volume_sub_path: str, file_type: str, redox_extract_volume: str, cleanSource_retentionDuration: str, cleanSource: str = "OFF"):
