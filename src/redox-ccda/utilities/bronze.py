@@ -53,7 +53,7 @@ class Bronze:
       else:
         volume_path = f"/Volumes/{self.catalog}/{self.schema}/{self.volume}/{self.volume_sub_path}/{self.file_type}"
 
-      extract_path = f"/Volumes/{self.catalog}/{self.schema}/{self.redox_extract_volume}/{self.file_type}"
+      extract_path = f"/Volumes/{self.catalog}/{self.schema}/{self.redox_extract_volume}/{self.file_type}/"
 
       @dlt.table(
         name=f"{self.catalog}.{self.schema}.{self.file_type}_bronze",
