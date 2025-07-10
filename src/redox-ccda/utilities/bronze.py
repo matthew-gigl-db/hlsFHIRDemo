@@ -7,15 +7,16 @@ from pyspark.sql.types import StringType, MapType
 
 class Bronze:
     def __init__(self, spark: SparkSession, catalog: str, schema: str, volume: str, volume_sub_path: str, file_type: str, redox_extract_volume: str, cleanSource_retentionDuration: str, cleanSource: str = "OFF"):
-        self.spark = spark
-        self.catalog = catalog
-        self.schema = schema
-        self.volume = volume
-        self.volume_sub_path = volume_sub_path
-        self.file_type = file_type
-        self.redox_extract_volume = redox_extract_volume
-        self.cleanSource_retentionDuration = cleanSource_retentionDuration
-        self.cleanSource = cleanSource
+        self._spark = spark
+        self._catalog = catalog
+        self._schema = schema
+        self._volume = volume
+        self._volume_sub_path = volume_sub_path
+        self._file_type = file_type
+        self._redox_extract_volume = redox_extract_volume
+        self._cleanSource_retentionDuration = cleanSource_retentionDuration
+        self._cleanSource = cleanSource
+
     """
     The Bronze class represents a data structure for managing metadata related to a specific data resource.
     
@@ -23,18 +24,38 @@ class Bronze:
         spark (SparkSession): The SparkSession object used for interacting with the Spark runtime.
         catalog (str): The catalog name where the data is stored.
         schema (str): The schema name within the catalog.
+        volume (str): The volume name within the schema.
         volume_sub_path (str): The sub-path within the volume where the data is located.
-        file_type (str): The type of the data resource.
+        file_type (str): The type of the clinical data resource, e.g. "ccda", "fhir", etc.
+        cleanSource_retentionDuration (str): The retention duration for the cleanSource.
+        cleanSource (str): The cleanSource for the data.
+        redox_extract_volume (str): The volume name within the schema where the original files are copied while processing into bronze and extracted by Redox for conversion.  
 
     Methods:
         __repr__(): Returns a string representation of the Bronze object.
-        stream_ingest(): Defines a Delta Live Table for streaming ingestion of CSV files.
-        to_dict(): Converts the Bronze object attributes to a dictionary.
-        from_dict(cls, data): Creates a Bronze object from a dictionary.
+        stream_ingest(): Defines a Delta Live Table for streaming ingestion of files using Auto Loader, applies file copy logic, and writes metadata and ingestion status.
+        to_dict(): Converts the Bronze object attributes to a dictionary for serialization or logging.
+        from_dict(cls, data): Creates a Bronze object from a dictionary of attributes.
     """
 
     def __repr__(self):
-        return f"Bronze(catalog='{self.catalog}', schema='{self.schema}', volume='{self.volume}',volume_sub_path='{self.volume_sub_path}', file_type='{self.file_type}')"
+        return (
+            f"Bronze("
+            f"spark={self._spark!r}, "
+            f"catalog='{self._catalog}', "
+            f"schema='{self._schema}', "
+            f"volume='{self._volume}', "
+            f"volume_sub_path='{self._volume_sub_path}', "
+            f"file_type='{self._file_type}', "
+            f"redox_extract_volume='{self._redox_extract_volume}', "
+            f"cleanSource_retentionDuration='{self._cleanSource_retentionDuration}', "
+            f"cleanSource='{self._cleanSource}'"
+            f")"
+        )
+
+    @property
+    def catalog(self):
+        return self._catalog
 
     @staticmethod
     @udf(MapType(StringType(), StringType()))
@@ -45,9 +66,6 @@ class Bronze:
         return {"status": "success"}
       except Exception as e:
         return {"status": "error", "message": str(e)}
-
-    # def copy_file_udf(self, src_path, dest_path):
-    #   udf(self.copy_file, MapType(StringType(), StringType()))
       
     def stream_ingest(self):
       schema_definition = f"""
@@ -58,20 +76,20 @@ class Bronze:
         file_block_length: BIGINT,
         file_modification_time: TIMESTAMP > NOT NULL COMMENT 'Metadata about the file ingested.'
         ,ingest_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP() COMMENT 'The date timestamp the file was ingested.'
-        ,value STRING COMMENT 'The raw {self.file_type} file contents.'
+        ,value STRING COMMENT 'The raw {self._file_type} file contents.'
         ,sent_to_redox MAP<STRING, STRING> COMMENT 'Status of the file being sent to Redox, with an error message on failure.'
       """
 
-      if self.volume_sub_path == None:
-        volume_path = f"/Volumes/{self.catalog}/{self.schema}/{self.volume}/{self.file_type}"
+      if self._volume_sub_path == None:
+        volume_path = f"/Volumes/{self._catalog}/{self._schema}/{self._volume}/{self._file_type}"
       else:
-        volume_path = f"/Volumes/{self.catalog}/{self.schema}/{self.volume}/{self.volume_sub_path}/{self.file_type}"
+        volume_path = f"/Volumes/{self._catalog}/{self._schema}/{self._volume}/{self._volume_sub_path}/{self._file_type}"
 
-      extract_path = f"/Volumes/{self.catalog}/{self.schema}/{self.redox_extract_volume}/{self.file_type}/"
+      extract_path = f"/Volumes/{self._catalog}/{self._schema}/{self._redox_extract_volume}/{self._file_type}/"
 
       @dlt.table(
-        name=f"{self.catalog}.{self.schema}.{self.file_type}_bronze",
-        comment=f"Streaming bronze ingestion of {self.file_type} files from {volume_path}",
+        name=f"{self._catalog}.{self._schema}.{self._file_type}_bronze",
+        comment=f"Streaming bronze ingestion of {self._file_type} files from {volume_path}",
         # spark_conf={"<key>" : "<value>", "<key>" : "<value>"},
         table_properties={
           'quality' : 'bronze'
@@ -88,26 +106,61 @@ class Bronze:
       )
       # @dlt.expect(...)
       def stream_ingest_function():
-          return (self.spark.readStream
+          return (
+            self._spark.readStream
             .format("cloudFiles")
             .option("cloudFiles.format", "text")
             .option("wholeText", "true")
-            .option("cloudFiles.cleanSource", self.cleanSource)
-            .option("cloudFiles.cleanSource.retentionDuration", self.cleanSource_retentionDuration)
+            .option("cloudFiles.cleanSource", self._cleanSource)
+            .option("cloudFiles.cleanSource.retentionDuration", self._cleanSource_retentionDuration)
             .load(volume_path)
             .selectExpr("_metadata as file_metadata", "*")
             .withColumn("source_path", col("file_metadata.file_path"))
             .withColumn("extraction_path",  concat(lit(extract_path), col("file_metadata.file_name")))
             .withColumn("sent_to_redox", self.copy_file(col("source_path"), col("extraction_path")))
             .drop("source_path", "extraction_path")
+            .withColumn(
+              "parsed_value",
+              from_xml(
+                col("value"),
+                schema_of_xml(col("value")),
+                {
+                  "rowTag": "ClinicalDocument",
+                  "rootTag": "root",
+                  "nullValue": "",
+                  "mode": "PERMISSIVE"
+                }
+              )
+            )
           )
 
     def to_dict(self):
-        return {"spark": self.spark, "catalog": self.catalog, "schema": self.schema, "volume": self.volume, "volume_sub_path": self.volume_sub_path, "file_type": self.file_type,  "cleanSource_moveDestination": self.cleanSource_moveDestination, "cleanSource_retentionDuration": self.cleanSource_retentionDuration}
+        return {
+            "spark": self._spark,
+            "catalog": self._catalog,
+            "schema": self._schema,
+            "volume": self._volume,
+            "volume_sub_path": self._volume_sub_path,
+            "file_type": self._file_type,
+            "redox_extract_volume": self._redox_extract_volume,
+            "cleanSource_retentionDuration": self._cleanSource_retentionDuration,
+            "cleanSource": self._cleanSource
+        }
 
     @classmethod
     def from_dict(cls, data):
-        return cls(data['spark'], data['catalog'], data['schema'], data['volume'], data['volume_sub_path'], data['file_type'], data['cleanSource_moveDestination'], data['cleanSource_retentionDuration'])
+        return cls(
+            data['spark'],
+            data['catalog'],
+            data['schema'],
+            data['volume'],
+            data['volume_sub_path'],
+            data['file_type'],
+            data['redox_extract_volume'],
+            data['cleanSource_retentionDuration'],
+            data.get('cleanSource', "OFF")
+        )
+
 
 
 
