@@ -119,19 +119,19 @@ class Bronze:
             .withColumn("extraction_path",  concat(lit(extract_path), col("file_metadata.file_name")))
             .withColumn("sent_to_redox", self.copy_file(col("source_path"), col("extraction_path")))
             .drop("source_path", "extraction_path")
-            .withColumn(
-              "parsed_value",
-              from_xml(
-                col("value"),
-                schema_of_xml(col("value")),
-                {
-                  "rowTag": "ClinicalDocument",
-                  "rootTag": "root",
-                  "nullValue": "",
-                  "mode": "PERMISSIVE"
-                }
-              )
-            )
+            # .withColumn(
+            #   "parsed_value",
+            #   from_xml(
+            #     col("value"),
+            #     schema_of_xml(col("value")),
+            #     {
+            #       "rowTag": "ClinicalDocument",
+            #       "rootTag": "root",
+            #       "nullValue": "",
+            #       "mode": "PERMISSIVE"
+            #     }
+            #   )
+            # )
           )
 
     def to_dict(self):
