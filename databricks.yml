@@ -67,10 +67,10 @@ targets:
       tags:
         fhir_workshop: true
         dev: matthew_giglia
-        removeAfter: 20261231
+        removeAfter: 20261208
     workspace:
       # edit the workshop url for the given Cloud Labs deployment
-      host: https://dbc-857ff670-4c00.cloud.databricks.com/ 
+      host: https://dbc-ac1c4edd-cd1c.cloud.databricks.com/
       # We explicitly specify the root_path to make sure we only have a single copy.
       root_path: /Workspace/Users/${var.run_as_user}/.bundle/${bundle.name}/${bundle.target}
     permissions:
@@ -81,15 +81,15 @@ targets:
     run_as:
       user_name: ${var.run_as_user}
     variables:
-      customer_name: WholeCare
+      customer_name: Childrens National
       catalog_use: fhir_workshop
       schema_use: synthea
       workshop_fhir_ingestion_workflow_name: Synthea FHIR Ingestion
       workflow_trigger_pause_status: UNPAUSED
       # edit the run as user to be your instructor id 
-      run_as_user: odl_instructor_1452233@databrickslabs.com
+      run_as_user: adminuser3339355@vocareum.com
       # identify the sql warehouse created from the Workshop lab Workspace Set Up and Replace below
-      sql_warehouse_id: b8e811181cae93c0
+      sql_warehouse_id: 41beeac0d1fae02a
 
 
   hls_webinar_fy25q4:
